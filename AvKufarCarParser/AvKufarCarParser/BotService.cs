@@ -1,7 +1,6 @@
 ﻿using AvKufarCarParser.Kufar;
 using AvKufarCarParser.Models;
 using Microsoft.Extensions.Hosting;
-using System;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -19,7 +18,7 @@ namespace AvKufarCarParser
         {
             _httpClient = new HttpClient();
             _botClient = new TelegramBotClient(Util.BotToken);
-            _kufarProcessor = new KufarProcessor(_httpClient, _botClient);
+            _kufarProcessor = new KufarProcessor(_httpClient);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,8 +28,8 @@ namespace AvKufarCarParser
                 _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
                 Console.WriteLine("Bot is running...");
 
-                SubscribedUsers.Add(Util.UserId);
-                SubscribedUsers.Add(769603864);
+                //SubscribedUsers.Add(Util.UserId);
+                //SubscribedUsers.Add(769603864);
 
                 while (!stoppingToken.IsCancellationRequested)
                 {

@@ -1,21 +1,18 @@
 ﻿using AvKufarCarParser.Models;
 using System.Text.Json;
-using Telegram.Bot;
 
 namespace AvKufarCarParser.Kufar
 {
     public class KufarProcessor
     {
         private readonly HttpClient _httpClient;
-        private readonly ITelegramBotClient _botClient;
 
         private int _previousTotal = -1;
         private int _currentTotal;
 
-        public KufarProcessor(HttpClient httpClient, ITelegramBotClient botClient)
+        public KufarProcessor(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _botClient = botClient;
         }
 
         public async Task<List<Ad>> GetNewAds()
