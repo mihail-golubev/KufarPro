@@ -3,12 +3,9 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
 
-# Copy the .csproj file and restore any dependencies (via dotnet restore)
-COPY *.csproj ./
-RUN dotnet restore
-
-# Copy the rest of the application code
+# Copy the all and restore any dependencies (via dotnet restore)
 COPY . ./
+RUN dotnet restore
 
 # Publish the application to the /out directory (Release configuration)
 RUN dotnet publish -c Release -o /out
