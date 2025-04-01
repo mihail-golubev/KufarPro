@@ -33,13 +33,14 @@ namespace AvKufarCarParser
                 SubscribedUsers.Add(Util.MikhailId);
                 SubscribedUsers.Add(Util.IlyaId);
                 SubscribedUsers.Add(Util.AlenaId);
+                SubscribedUsers.Add(Util.MaksId);
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     var newAds = await _kufarProcessor.GetNewAds();
                     await Task.WhenAll(newAds.Select(ad => NotifyUsers(ad)));
 
-                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }
             }
 
@@ -58,19 +59,19 @@ namespace AvKufarCarParser
 
                 if (messageText == "/start")
                 {
-                    await bot.SendMessage(chatId, "Welcome! Use /subscribe to receive new ads.", cancellationToken: token);
+                    await bot.SendMessage(chatId, "Добро пожаловать в бота AvKufarCarParser! Используйте /subscribe, чтобы получать новые объявления.", cancellationToken: token);
                     _logger.LogInformation($"User {chatId} has started.");
                 }
                 else if (messageText == "/subscribe")
                 {
                     SubscribedUsers.Add(chatId);
-                    await bot.SendMessage(chatId, "You have subscribed to new ads notifications!", cancellationToken: token);
+                    await bot.SendMessage(chatId, "Вы подписались на уведомления о новых объявлениях!", cancellationToken: token);
                     _logger.LogInformation($"User {chatId} has subscribed.");
                 }
                 else if (messageText == "/unsubscribe")
                 {
                     SubscribedUsers.Remove(chatId);
-                    await bot.SendMessage(chatId, "You have unsubscribed from notifications.", cancellationToken: token);
+                    await bot.SendMessage(chatId, "Вы отписались от уведомлений о новых объявлениях!", cancellationToken: token);
                     _logger.LogInformation($"User {chatId} has unsubscribed.");
                 }
             }

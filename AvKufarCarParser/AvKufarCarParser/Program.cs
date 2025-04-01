@@ -12,8 +12,7 @@ namespace AvKufarCarParser
     {
         public static async Task Main(string[] args)
         {
-            var exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var logFilePath = Path.Combine(exeFolder, "AutoKufarParser.log");
+            var logFilePath = Path.Combine(AppContext.BaseDirectory, "AutoKufarParser.log");
 
             var host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>

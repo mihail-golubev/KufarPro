@@ -14,14 +14,21 @@ namespace AvKufarCarParser.Logging
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (formatter == null) return;
-
-            var message = $"[{DateTime.Now:HH:mm:ss dd/MM/yyyy}] [{logLevel}] {formatter(state, exception)}{Environment.NewLine}";
-
-            lock (_lock)
+            if (!File.Exists(_filePath))
             {
-                File.AppendAllText(_filePath, message);
+                File.Create(_filePath).Dispose();
             }
+
+            FileInfo fileInfo = new FileInfo(_filePath);
+
+            if (fileInfo.Length > Util.MaxFileSize)
+            {
+                File.WriteAllText(_filePath, string.Empty);
+            }
+
+            string logMessage = $"{DateTime.Now:dd/MM/yyyy HH:mm:ss} [{logLevel}] {formatter(state, exception)}{Environment.NewLine}";
+
+            File.AppendAllText(_filePath, logMessage, System.Text.Encoding.UTF8);
         }
     }
 }
