@@ -113,7 +113,7 @@ namespace AvKufarCarParser
                 }
             }
 
-            _logger.LogError($"{SubscribedUsers.Count} user(s) have been notified about {ad.CarParams.Brand} {ad.CarParams.Model} ad listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+            _logger.LogInformation($"{SubscribedUsers.Count} user(s) have been notified about {ad.CarParams.Brand} {ad.CarParams.Model} ad listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
         }
     }
 }
