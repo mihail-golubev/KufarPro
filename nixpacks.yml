@@ -1,0 +1,9 @@
+build:
+  # Specify the command to restore the project
+  restore: "dotnet restore AvKufarCarParser/AvKufarCarParser.csproj"
+  # Specify the build command with path to your .csproj file
+  build: "dotnet build AvKufarCarParser/AvKufarCarParser.csproj -c Release"
+
+start:
+  # Start the application (adjust the path if needed)
+  command: "dotnet AvKufarCarParser/bin/Release/net8.0/AvKufarCarParser.dll"
