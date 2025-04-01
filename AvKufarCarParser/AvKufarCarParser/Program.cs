@@ -1,7 +1,9 @@
 ﻿using AvKufarCarParser.Kufar;
+using AvKufarCarParser.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 using Telegram.Bot;
 
 namespace AvKufarCarParser
@@ -10,6 +12,9 @@ namespace AvKufarCarParser
     {
         public static async Task Main(string[] args)
         {
+            var exeFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var logFilePath = Path.Combine(exeFolder, "AutoKufarParser.log");
+
             var host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
@@ -27,6 +32,7 @@ namespace AvKufarCarParser
                     {
                         options.TimestampFormat = "[dd/MM/yyyy HH:mm:ss] ";
                     });
+                    logging.AddProvider(new FileLoggerProvider(logFilePath));
                 })
                 .Build();
 
