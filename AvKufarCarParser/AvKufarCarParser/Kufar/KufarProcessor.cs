@@ -1,18 +1,23 @@
 ﻿using AvKufarCarParser.Models;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace AvKufarCarParser.Kufar
 {
     public class KufarProcessor
     {
-        private readonly HttpClient _httpClient;
-
         private int _previousTotal = -1;
-        private int _currentTotal;
+        private int _total;
+        private int _previousLatestAdId = -1;
+        private int _latestAdId;
 
-        public KufarProcessor(HttpClient httpClient)
+        private readonly HttpClient _httpClient;
+        private readonly ILogger<KufarProcessor> _logger;
+
+        public KufarProcessor(HttpClient httpClient, ILogger<KufarProcessor> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
         }
 
         public async Task<List<Ad>> GetNewAds()
@@ -24,27 +29,40 @@ namespace AvKufarCarParser.Kufar
             var responseString = await response.Content.ReadAsStringAsync();
             var searchResult = JsonSerializer.Deserialize<SearchResult>(responseString);
 
-            if (_previousTotal != -1)
+            if (_previousLatestAdId == -1 || _previousTotal == -1)
             {
-                _previousTotal = _currentTotal;
-                _currentTotal = searchResult.Total;
+                _previousTotal = searchResult.Total;
+                _total = searchResult.Total;
+                _previousLatestAdId = searchResult.Ads.FirstOrDefault().Id;
+                _latestAdId = searchResult.Ads.FirstOrDefault().Id;
 
-                var quantityOfNewAds = _currentTotal - _previousTotal;
-
-                if (searchResult.Ads.Count >= quantityOfNewAds)
-                {
-                    result = searchResult.Ads.Take(quantityOfNewAds).ToList();
-                    //result.Add(searchResult.Ads.FirstOrDefault());
-                }
-                else
-                {
-                    result = searchResult.Ads;
-                }
+                _logger.LogInformation("Initial values have been set up!");
             }
             else
             {
-                _previousTotal = searchResult.Total;
-                _currentTotal = searchResult.Total;
+                _logger.LogInformation($"There are {searchResult.Total} ads in total.");
+
+                _previousTotal = _total;
+                _total = searchResult.Total;
+                _previousLatestAdId = _latestAdId;
+                _latestAdId = searchResult.Ads.FirstOrDefault().Id;
+
+                var quantityOfNewAds = _total - _previousTotal;
+
+                if (_previousLatestAdId != _latestAdId && quantityOfNewAds > 0)
+                {
+                    if (searchResult.Ads.Count >= quantityOfNewAds)
+                    {
+                        result = searchResult.Ads.Take(quantityOfNewAds).ToList();
+                        //result.Add(searchResult.Ads.FirstOrDefault());
+                    }
+                    else
+                    {
+                        result = searchResult.Ads;
+                    }
+                }
+
+                _logger.LogInformation($"{result.Count} new ad(s) detected.");
             }
 
             return result;

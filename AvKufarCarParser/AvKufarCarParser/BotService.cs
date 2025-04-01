@@ -1,6 +1,7 @@
 ﻿using AvKufarCarParser.Kufar;
 using AvKufarCarParser.Models;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -9,16 +10,17 @@ namespace AvKufarCarParser
 {
     public class BotService : BackgroundService
     {
-        private readonly HttpClient _httpClient;
         private readonly ITelegramBotClient _botClient;
         private readonly KufarProcessor _kufarProcessor;
+        private readonly ILogger<BotService> _logger;
+
         private static readonly HashSet<long> SubscribedUsers = new HashSet<long>();
 
-        public BotService()
+        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, ILogger<BotService> logger)
         {
-            _httpClient = new HttpClient();
-            _botClient = new TelegramBotClient(Util.BotToken);
-            _kufarProcessor = new KufarProcessor(_httpClient);
+            _botClient = botClient;
+            _kufarProcessor = kufarProcessor;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -26,10 +28,11 @@ namespace AvKufarCarParser
             try
             {
                 _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-                Console.WriteLine("Bot is running...");
+                _logger.LogInformation("BotService is running...");
 
-                //SubscribedUsers.Add(Util.UserId);
-                //SubscribedUsers.Add(769603864);
+                SubscribedUsers.Add(Util.MikhailId);
+                SubscribedUsers.Add(Util.IlyaId);
+                SubscribedUsers.Add(Util.AlenaId);
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -42,7 +45,7 @@ namespace AvKufarCarParser
 
             catch (Exception ex)
             {
-                Console.WriteLine($"Some error occured: {ex.Message}");
+                _logger.LogError($"Some error occured: {ex.Message}");
             }
         }
 
@@ -56,29 +59,32 @@ namespace AvKufarCarParser
                 if (messageText == "/start")
                 {
                     await bot.SendMessage(chatId, "Welcome! Use /subscribe to receive new ads.", cancellationToken: token);
+                    _logger.LogInformation($"User {chatId} has started.");
                 }
                 else if (messageText == "/subscribe")
                 {
                     SubscribedUsers.Add(chatId);
                     await bot.SendMessage(chatId, "You have subscribed to new ads notifications!", cancellationToken: token);
+                    _logger.LogInformation($"User {chatId} has subscribed.");
                 }
                 else if (messageText == "/unsubscribe")
                 {
                     SubscribedUsers.Remove(chatId);
                     await bot.SendMessage(chatId, "You have unsubscribed from notifications.", cancellationToken: token);
+                    _logger.LogInformation($"User {chatId} has unsubscribed.");
                 }
             }
         }
 
         private Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken token)
         {
-            Console.WriteLine($"Bot error: {exception.Message}");
+            _logger.LogError($"Error: {exception.Message}");
             return Task.CompletedTask;
         }
 
         private async Task NotifyUsers(Ad ad)
         {
-            string message = $"Вышло новое объявление!" +
+            string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +
                 $"\n\nНазвание автомобиля: {ad.CarParams.Brand} {ad.CarParams.Model}" +
                 $"\nЦена: ${ad.Price}" +
                 $"\nОбласть: {ad.CarParams.Region}" +
@@ -107,7 +113,7 @@ namespace AvKufarCarParser
                 }
             }
 
-            Console.WriteLine("Users have been notified.");
+            _logger.LogError($"{SubscribedUsers.Count} user(s) have been notified about {ad.CarParams.Brand} {ad.CarParams.Model} ad listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
         }
     }
 }

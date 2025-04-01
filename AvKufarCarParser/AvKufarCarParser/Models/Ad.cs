@@ -28,6 +28,12 @@ namespace AvKufarCarParser.Models
         [JsonPropertyName("phone_hidden")]
         public bool PhoneHidden { get; set; }
 
+        [JsonPropertyName("list_time")]
+        public string RawListTime { get; set; }
+
+        [JsonIgnore]
+        public DateTime ListTime => DateTime.TryParse(RawListTime, out var parsedDate) ? parsedDate : DateTime.MinValue;
+
         [JsonPropertyName("price_usd")]
         public string RawPrice { get; set; }
 
