@@ -1,6 +1,9 @@
-﻿using AvKufarCarParser.Models;
+﻿using AvKufarCarParser.Models.Database;
+using AvKufarCarParser.Models.Kufar;
+using AvKufarCarParser.Models.Kufar.API;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace AvKufarCarParser.Kufar
 {
@@ -20,11 +23,13 @@ namespace AvKufarCarParser.Kufar
             _logger = logger;
         }
 
-        public async Task<List<Ad>> GetNewAds()
+        public async Task<List<Ad>> GetNewAds(List<FilterParameter> parameters)
         {
             var result = new List<Ad>();
+            //var url = GetScanUrl(parameters);
+            var url = Util.GetLink;
 
-            var response = await _httpClient.GetAsync(Util.GetLink);
+            var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var searchResult = JsonSerializer.Deserialize<SearchResult>(responseString);
@@ -54,7 +59,6 @@ namespace AvKufarCarParser.Kufar
                     if (searchResult.Ads.Count >= quantityOfNewAds)
                     {
                         result = searchResult.Ads.Take(quantityOfNewAds).ToList();
-                        //result.Add(searchResult.Ads.FirstOrDefault());
                     }
                     else
                     {
@@ -65,7 +69,36 @@ namespace AvKufarCarParser.Kufar
                 _logger.LogInformation($"{result.Count} new ad(s) detected.");
             }
 
+            //result.Add(searchResult.Ads[0]);
             return result;
+        }
+
+        private string GetScanUrl(List<FilterParameter> parameters)
+        {
+            var baseUrl = "https://api.kufar.by/search-api/v2/search/rendered-paginated?";
+            var defaultParams = new Dictionary<string, string>
+            {
+                { "cat", "2010" },  // Car category
+                { "cur", "USD" },   // Currency
+                { "size", "10" },   // Number of results per page
+                { "sort", "lst.d" } // Sorting by newest listings
+            };
+
+            var queryParams = parameters.ToDictionary(p => p.QueryName, p => p.Value);
+
+            // Merge default params with user-defined ones (overwriting defaults if needed)
+            foreach (var kvp in defaultParams)
+            {
+                if (!queryParams.ContainsKey(kvp.Key))
+                {
+                    queryParams[kvp.Key] = kvp.Value;
+                }
+            }
+
+            // Build query string
+            var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+
+            return $"{baseUrl}{queryString}";
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using AvKufarCarParser.Models;
+﻿using AvKufarCarParser.Models.Kufar;
 
 namespace AvKufarCarParser
 {
@@ -11,6 +11,10 @@ namespace AvKufarCarParser
 
         public const string IlyaBotToken = "7401221219:AAGcFfwRghJq75JV_GByoHyIQF4H88E9S-8";
         public const string GetLink = "https://api.kufar.by/search-api/v2/search/rendered-paginated?cat=2010&cur=USD&prc=r%3A0%2C1500&rgn=2&size=10&sort=lst.d";
+
+        public const string DbConnectionString = "mongodb://localhost:27017";
+        public const string DbName = "avkufarcarparser_db";
+        public const string CollectionName = "subscribed_users";
 
         public const long MaxFileSize = 512 * 1024;
 

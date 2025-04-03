@@ -1,5 +1,7 @@
-﻿using AvKufarCarParser.Kufar;
-using AvKufarCarParser.Models;
+﻿using AvKufarCarParser.DataAccess;
+using AvKufarCarParser.Kufar;
+using AvKufarCarParser.Models.Database;
+using AvKufarCarParser.Models.Kufar;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -10,43 +12,47 @@ namespace AvKufarCarParser
 {
     public class BotService : BackgroundService
     {
+        private List<SearchFilter> _searchFilters;
+
         private readonly ITelegramBotClient _botClient;
         private readonly KufarProcessor _kufarProcessor;
+        private readonly DatabaseService _databaseService;
         private readonly ILogger<BotService> _logger;
 
-        private static readonly HashSet<long> SubscribedUsers = new HashSet<long>();
-
-        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, ILogger<BotService> logger)
+        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, DatabaseService databaseService, ILogger<BotService> logger)
         {
             _botClient = botClient;
             _kufarProcessor = kufarProcessor;
+            _databaseService = databaseService;
             _logger = logger;
+
+            _searchFilters = _databaseService.GetAllFiltersAsync().Result;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            try
+            _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
+            _logger.LogInformation("AvKufarCarParser Bot 1.1.0 has been started.");
+
+            while (!stoppingToken.IsCancellationRequested)
             {
-                _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-                _logger.LogInformation("AvKufarCarParser Bot 1.0.1 has been started.");
-
-                SubscribedUsers.Add(Util.MikhailId);
-                SubscribedUsers.Add(Util.IlyaId);
-                SubscribedUsers.Add(Util.AlenaId);
-                SubscribedUsers.Add(Util.MaksId);
-
-                while (!stoppingToken.IsCancellationRequested)
+                try
                 {
-                    var newAds = await _kufarProcessor.GetNewAds();
-                    await Task.WhenAll(newAds.Select(ad => NotifyUsers(ad)));
+                    _logger.LogInformation($"There are {_searchFilters.Count} search filters in database. Looking for new ads..");
+
+                    foreach (var searchFilter in _searchFilters)
+                    {
+                        var newAds = await _kufarProcessor.GetNewAds(searchFilter.FilterParameters);
+                        await Task.WhenAll(newAds.Select(ad => NotifyUsers(ad, searchFilter.ChatIds)));
+                    }
 
                     await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }
-            }
 
-            catch (Exception ex)
-            {
-                _logger.LogError($"Some error occured: {ex.Message}");
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Some error occured: {ex.Message}. Continue scanning..");
+                }
             }
         }
 
@@ -57,22 +63,38 @@ namespace AvKufarCarParser
                 long chatId = update.Message.Chat.Id;
                 string messageText = update.Message.Text.ToLower();
 
-                if (messageText == "/start")
+                if (messageText.StartsWith("/subscribe"))
                 {
-                    await bot.SendMessage(chatId, "Добро пожаловать в бота AvKufarCarParser! Используйте /subscribe, чтобы получать новые объявления.", cancellationToken: token);
-                    _logger.LogInformation($"User {chatId} has started.");
+                    var parameters = ParseFilterParameters(messageText);
+                    var result = await _databaseService.AddOrUpdateSubscriptionAsync(chatId, parameters);
+
+                    if (result != null)
+                    {
+                        await bot.SendMessage(chatId, "Вы подписались на уведомления о новых объявлениях!", cancellationToken: token);
+                        _searchFilters.Add(result);
+                        _logger.LogInformation($"User {chatId} has subscribed.");
+                    }
+                    else
+                    {
+                        await bot.SendMessage(chatId, "Что-то пошло не так. Возможно, вы уже подписаны на уведомления по этому фильтру.", cancellationToken: token);
+                        _logger.LogInformation($"User {chatId} has not been subscribed.");
+                    }
                 }
-                else if (messageText == "/subscribe")
+                else if (messageText.StartsWith("/unsubscribe"))
                 {
-                    SubscribedUsers.Add(chatId);
-                    await bot.SendMessage(chatId, "Вы подписались на уведомления о новых объявлениях!", cancellationToken: token);
-                    _logger.LogInformation($"User {chatId} has subscribed.");
-                }
-                else if (messageText == "/unsubscribe")
-                {
-                    SubscribedUsers.Remove(chatId);
-                    await bot.SendMessage(chatId, "Вы отписались от уведомлений о новых объявлениях!", cancellationToken: token);
-                    _logger.LogInformation($"User {chatId} has unsubscribed.");
+                    var parameters = ParseFilterParameters(messageText);
+                    var result = await _databaseService.RemoveSubscriptionAsync(chatId, parameters);
+
+                    if (result)
+                    {
+                        await bot.SendMessage(chatId, "Вы отписались от уведомлений о новых объявлениях!", cancellationToken: token);
+                        _logger.LogInformation($"User {chatId} has unsubscribed.");
+                    }
+                    else
+                    {
+                        await bot.SendMessage(chatId, "Что-то пошло не так. Возможно, вы не подписаны на уведомления по этому фильтру.", cancellationToken: token);
+                        _logger.LogInformation($"User {chatId} has not been unsubscribed.");
+                    }
                 }
             }
         }
@@ -83,7 +105,7 @@ namespace AvKufarCarParser
             return Task.CompletedTask;
         }
 
-        private async Task NotifyUsers(Ad ad)
+        private async Task NotifyUsers(Ad ad, List<long> chatIds)
         {
             string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +
                 $"\n\nНазвание автомобиля: {ad.CarParams.Brand} {ad.CarParams.Model}" +
@@ -99,7 +121,7 @@ namespace AvKufarCarParser
                 $"\nТип кузова: {ad.CarParams.BodyType}" +
                 $"\nПривод: {ad.CarParams.DriveType}";
 
-            foreach (var userId in SubscribedUsers)
+            foreach (var userId in chatIds)
             {
                 if (ad.Images.Count > 0)
                 {
@@ -114,7 +136,24 @@ namespace AvKufarCarParser
                 }
             }
 
-            _logger.LogInformation($"{SubscribedUsers.Count} user(s) have been notified about {ad.CarParams.Brand} {ad.CarParams.Model} ad listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+            _logger.LogInformation($"{_searchFilters.Count} user(s) have been notified about {ad.CarParams.Brand} {ad.CarParams.Model} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+        }
+
+        private List<FilterParameter> ParseFilterParameters(string messageText)
+        {
+            var parameters = new List<FilterParameter>();
+            var parts = messageText.Split(' ').Skip(1);
+
+            foreach (var part in parts)
+            {
+                var kv = part.Split('=');
+                if (kv.Length == 2)
+                {
+                    parameters.Add(new FilterParameter { QueryName = kv[0], Value = kv[1] });
+                }
+            }
+
+            return parameters;
         }
     }
 }
