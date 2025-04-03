@@ -51,7 +51,7 @@ namespace AvKufarCarParser
 
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Some error occured: {ex.Message}. Continue scanning..");
+                    _logger.LogError($"Some error occured: {ex.GetType()}::{ex.Message}. Continue scanning..");
                 }
             }
         }
