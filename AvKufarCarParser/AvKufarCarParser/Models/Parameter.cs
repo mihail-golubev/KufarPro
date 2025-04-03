@@ -11,7 +11,7 @@ namespace AvKufarCarParser.Models
         public string KeyRu { get; set; }
 
         [JsonPropertyName("vl")]
-        public string ValueLong { get; set; }
+        public object ValueLong { get; set; }
 
         [JsonPropertyName("v")]
         public object Value { get; set; }
