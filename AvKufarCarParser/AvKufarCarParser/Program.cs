@@ -19,7 +19,7 @@ namespace AvKufarCarParser
                     services.AddLogging(configure => configure.AddSimpleConsole());
                     services.AddSingleton<HttpClient>();
                     services.AddSingleton<ITelegramBotClient>(sp =>
-                        new TelegramBotClient(Environment.GetEnvironmentVariable("BOT_TOKEN")));
+                        new TelegramBotClient(Util.MikhailBotToken));
                     services.AddSingleton<KufarProcessor>();
                     services.AddHostedService<BotService>();
                 })
