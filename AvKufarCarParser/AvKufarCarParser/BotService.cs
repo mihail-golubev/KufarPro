@@ -28,7 +28,7 @@ namespace AvKufarCarParser
             try
             {
                 _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-                _logger.LogInformation("AvKufarCarParser Bot 1.0.0 has been started.");
+                _logger.LogInformation("AvKufarCarParser Bot 1.0.1 has been started.");
 
                 SubscribedUsers.Add(Util.MikhailId);
                 SubscribedUsers.Add(Util.IlyaId);
