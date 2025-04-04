@@ -32,7 +32,7 @@ namespace AvKufarCarParser
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation("AvKufarCarParser Bot 1.1.0 has been started.");
+            _logger.LogInformation("AvKufarCarParser Bot 1.2.0 has been started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {

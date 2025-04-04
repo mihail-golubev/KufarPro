@@ -3,7 +3,6 @@ using AvKufarCarParser.Models.Kufar;
 using AvKufarCarParser.Models.Kufar.API;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
 
 namespace AvKufarCarParser.Kufar
 {
@@ -69,7 +68,9 @@ namespace AvKufarCarParser.Kufar
                 _logger.LogInformation($"{result.Count} new ad(s) detected.");
             }
 
-            //result.Add(searchResult.Ads[0]);
+            //result.Add(searchResult.Ads[1]);
+            result.ForEach(x => x.Images = x.Images?.Take(10).ToList());
+
             return result;
         }
 

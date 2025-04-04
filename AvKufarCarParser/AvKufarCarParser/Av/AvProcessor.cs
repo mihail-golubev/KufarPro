@@ -1,5 +1,4 @@
-﻿using AvKufarCarParser.Models;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Telegram.Bot;
 
