@@ -16,17 +16,17 @@ namespace AvKufarCarParser
 
         private readonly ITelegramBotClient _botClient;
         private readonly KufarProcessor _kufarProcessor;
-        private readonly DatabaseService _databaseService;
+        private readonly IDbService _dbService;
         private readonly ILogger<BotService> _logger;
 
-        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, DatabaseService databaseService, ILogger<BotService> logger)
+        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, IDbService dbService, ILogger<BotService> logger)
         {
             _botClient = botClient;
             _kufarProcessor = kufarProcessor;
-            _databaseService = databaseService;
+            _dbService = dbService;
             _logger = logger;
 
-            _searchFilters = _databaseService.GetAllFiltersAsync().Result;
+            _searchFilters = _dbService.GetAllFiltersAsync().Result;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -66,7 +66,7 @@ namespace AvKufarCarParser
                 if (messageText.StartsWith("/subscribe"))
                 {
                     var parameters = ParseFilterParameters(messageText);
-                    var result = await _databaseService.AddOrUpdateSubscriptionAsync(chatId, parameters);
+                    var result = await _dbService.AddOrUpdateSubscriptionAsync(chatId, parameters);
 
                     if (result != null)
                     {
@@ -83,7 +83,7 @@ namespace AvKufarCarParser
                 else if (messageText.StartsWith("/unsubscribe"))
                 {
                     var parameters = ParseFilterParameters(messageText);
-                    var result = await _databaseService.RemoveSubscriptionAsync(chatId, parameters);
+                    var result = await _dbService.RemoveSubscriptionAsync(chatId, parameters);
 
                     if (result)
                     {
@@ -101,7 +101,7 @@ namespace AvKufarCarParser
 
         private Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken token)
         {
-            _logger.LogError($"Error: {exception.Message}");
+            _logger.LogError($"Exception type: {exception.GetType().Name}. Error message: {exception.Message}");
             return Task.CompletedTask;
         }
 

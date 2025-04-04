@@ -27,11 +27,12 @@ namespace AvKufarCarParser
                         settings.ServerApi = new ServerApi(ServerApiVersion.V1);
                         return new MongoClient(settings);
                     });
+
                     services.AddSingleton<ITelegramBotClient>(sp =>
-                        new TelegramBotClient(Environment.GetEnvironmentVariable("AV_KUFAR_CAR_BOT_TOKEN")));
+                        new TelegramBotClient(Environment.GetEnvironmentVariable("AV_KUFAR_CAR_PARSER_BOT_TOKEN")));
 
                     services.AddSingleton<KufarProcessor>();
-                    services.AddSingleton<DatabaseService>();
+                    services.AddSingleton<IDbService, LiteDbService>();
                     services.AddHostedService<BotService>();
                 })
                 .ConfigureLogging(logging =>
