@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace AvKufarCarParser.Models
+namespace AvKufarCarParser.Models.Kufar
 {
     public class Ad
     {
