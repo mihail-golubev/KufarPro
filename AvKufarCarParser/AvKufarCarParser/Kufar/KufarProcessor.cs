@@ -1,6 +1,9 @@
-﻿using AvKufarCarParser.Models.Database;
-using AvKufarCarParser.Models.Kufar;
+﻿using AvKufarCarParser.Converters;
+using AvKufarCarParser.DataAccess;
+using AvKufarCarParser.Helpers;
+using AvKufarCarParser.Models.Database;
 using AvKufarCarParser.Models.Kufar.API;
+using AvKufarCarParser.Models.Kufar.HelperModels;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -8,37 +11,38 @@ namespace AvKufarCarParser.Kufar
 {
     public class KufarProcessor
     {
-        private int _previousTotal = -1;
-        private int _total;
-        private int _previousLatestAdId = -1;
-        private int _latestAdId;
-
         private readonly HttpClient _httpClient;
         private readonly ILogger<KufarProcessor> _logger;
+        private readonly IDbUpdaterService _dbUpdaterService;
 
-        public KufarProcessor(HttpClient httpClient, ILogger<KufarProcessor> logger)
+        public KufarProcessor(HttpClient httpClient, IDbUpdaterService dbUpdaterService, ILogger<KufarProcessor> logger)
         {
             _httpClient = httpClient;
+            _dbUpdaterService = dbUpdaterService;
             _logger = logger;
         }
 
-        public async Task<List<Ad>> GetNewAds(List<FilterParameter> parameters)
+        public async Task<List<Ad>> ScanForNewAds(SearchFilter searchFilter)
+        {
+            var adType = AppHelper.GetAdType(searchFilter.FilterParameters);
+            //var url = GetScanUrl(parameters);
+            var url = adType == AdType.Car ? AppHelper.GetCarLink : AppHelper.GetBikeLink;
+
+            var searchResult = await GetSearchResult(url, adType);
+
+            return GetNewAds(searchResult, searchFilter);
+        }
+
+        private List<Ad> GetNewAds(SearchResult searchResult, SearchFilter searchFilter)
         {
             var result = new List<Ad>();
-            //var url = GetScanUrl(parameters);
-            var url = Util.GetLink;
+            var adsIds = searchResult.Ads.Select(x => x.Id).ToList();
 
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            var responseString = await response.Content.ReadAsStringAsync();
-            var searchResult = JsonSerializer.Deserialize<SearchResult>(responseString);
-
-            if (_previousLatestAdId == -1 || _previousTotal == -1)
+            if (searchFilter.LatestAdsIds == null || searchFilter.Total == 0)
             {
-                _previousTotal = searchResult.Total;
-                _total = searchResult.Total;
-                _previousLatestAdId = searchResult.Ads.FirstOrDefault().Id;
-                _latestAdId = searchResult.Ads.FirstOrDefault().Id;
+                searchFilter.Total = searchResult.Total;
+                searchFilter.LatestAdsIds = adsIds;
+                _dbUpdaterService.UpdateSearchFilter(searchFilter);
 
                 _logger.LogInformation("Initial values have been set up!");
             }
@@ -46,23 +50,26 @@ namespace AvKufarCarParser.Kufar
             {
                 _logger.LogInformation($"There are {searchResult.Total} ads in total.");
 
-                _previousTotal = _total;
-                _total = searchResult.Total;
-                _previousLatestAdId = _latestAdId;
-                _latestAdId = searchResult.Ads.FirstOrDefault().Id;
-
-                var quantityOfNewAds = _total - _previousTotal;
-
-                if (_previousLatestAdId != _latestAdId && quantityOfNewAds > 0)
+                if (searchResult.Total != searchFilter.Total || !searchFilter.LatestAdsIds.SequenceEqual(adsIds))
                 {
-                    if (searchResult.Ads.Count >= quantityOfNewAds)
+                    var quantityOfNewAds = searchResult.Total - searchFilter.Total;
+
+                    if (quantityOfNewAds > 0 && !searchFilter.LatestAdsIds.SequenceEqual(adsIds))
                     {
-                        result = searchResult.Ads.Take(quantityOfNewAds).ToList();
+                        if (searchResult.Ads.Count >= quantityOfNewAds)
+                        {
+                            result = searchResult.Ads.Take(quantityOfNewAds).ToList();
+                        }
+                        else
+                        {
+                            result = searchResult.Ads;
+                        }
                     }
-                    else
-                    {
-                        result = searchResult.Ads;
-                    }
+
+                    searchFilter.Total = searchResult.Total;
+                    searchFilter.LatestAdsIds = adsIds;
+
+                    _dbUpdaterService.UpdateSearchFilter(searchFilter);
                 }
 
                 _logger.LogInformation($"{result.Count} new ad(s) detected.");
@@ -72,6 +79,19 @@ namespace AvKufarCarParser.Kufar
             result.ForEach(x => x.Images = x.Images?.Take(10).ToList());
 
             return result;
+        }
+
+        private async Task<SearchResult> GetSearchResult(string url, AdType adType)
+        {
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new SearchResultConverter(adType));
+            options.PropertyNameCaseInsensitive = true;
+
+            return JsonSerializer.Deserialize<SearchResult>(responseString, options);
         }
 
         private string GetScanUrl(List<FilterParameter> parameters)

@@ -1,16 +1,17 @@
-﻿using AvKufarCarParser.Models.Database;
+﻿using AvKufarCarParser.Helpers;
+using AvKufarCarParser.Models.Database;
 using MongoDB.Driver;
 
 namespace AvKufarCarParser.DataAccess
 {
-    public class MongoDbService : IDbService
+    public class MongoDbService : IDbSubscriptionService, IDbUpdaterService
     {
         private readonly IMongoCollection<SearchFilter> _searchFilters;
 
         public MongoDbService(IMongoClient client)
         {
-            var database = client.GetDatabase(Util.DbName);
-            _searchFilters = database.GetCollection<SearchFilter>(Util.CollectionName);
+            var database = client.GetDatabase(AppHelper.DbName);
+            _searchFilters = database.GetCollection<SearchFilter>(AppHelper.CollectionName);
         }
 
         public async Task<List<SearchFilter>> GetAllFiltersAsync()
@@ -54,7 +55,7 @@ namespace AvKufarCarParser.DataAccess
             }
         }
 
-        public async Task<bool> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters)
+        public async Task<SearchFilter> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters)
         {
             var existingFilter = await GetFilterByParametersAsync(parameters);
 
@@ -73,11 +74,21 @@ namespace AvKufarCarParser.DataAccess
                         await _searchFilters.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
                     }
 
-                    return true;
+                    return existingFilter;
                 }
             }
 
-            return false;
+            return null;
+        }
+
+        public async Task UpdateSearchFilter(SearchFilter searchFilter)
+        {
+            var filter = Builders<SearchFilter>.Filter.Eq(x => x.Id, searchFilter.Id);
+            var updatedFilter = Builders<SearchFilter>.Update
+                .Set(x => x.Total, searchFilter.Total)
+                .Set(x => x.LatestAdsIds, searchFilter.LatestAdsIds);
+
+            await _searchFilters.UpdateOneAsync(filter, updatedFilter);
         }
     }
 }

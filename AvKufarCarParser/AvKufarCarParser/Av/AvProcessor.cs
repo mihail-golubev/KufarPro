@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using AvKufarCarParser.Helpers;
+using System.Text;
 using System.Text.Json;
 using Telegram.Bot;
 
@@ -17,7 +18,7 @@ namespace AvKufarCarParser.Av
 
         private async Task<string> Login()
         {
-            var loginModel = Util.GetLoginModel();
+            var loginModel = AppHelper.GetLoginModel();
 
             var jsonPayload = JsonSerializer.Serialize(loginModel);
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace AvKufarCarParser.Models.Kufar
+namespace AvKufarCarParser.Models.Kufar.HelperModels
 {
     public class Parameter
     {

@@ -2,7 +2,7 @@
 
 namespace AvKufarCarParser.DataAccess
 {
-    public interface IDbService
+    public interface IDbSubscriptionService
     {
         public Task<List<SearchFilter>> GetAllFiltersAsync();
 
@@ -10,6 +10,6 @@ namespace AvKufarCarParser.DataAccess
 
         public Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, List<FilterParameter> parameters);
 
-        public Task<bool> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters);
+        public Task<SearchFilter> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters);
     }
 }

@@ -1,7 +1,8 @@
 ﻿using AvKufarCarParser.DataAccess;
+using AvKufarCarParser.Helpers;
 using AvKufarCarParser.Kufar;
 using AvKufarCarParser.Models.Database;
-using AvKufarCarParser.Models.Kufar;
+using AvKufarCarParser.Models.Kufar.API;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -16,10 +17,10 @@ namespace AvKufarCarParser
 
         private readonly ITelegramBotClient _botClient;
         private readonly KufarProcessor _kufarProcessor;
-        private readonly IDbService _dbService;
+        private readonly IDbSubscriptionService _dbService;
         private readonly ILogger<BotService> _logger;
 
-        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, IDbService dbService, ILogger<BotService> logger)
+        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, IDbSubscriptionService dbService, ILogger<BotService> logger)
         {
             _botClient = botClient;
             _kufarProcessor = kufarProcessor;
@@ -32,7 +33,7 @@ namespace AvKufarCarParser
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation("AvKufarCarParser Bot 1.2.0 has been started.");
+            _logger.LogInformation("AvKufarCarParser Bot 1.3.0 has been started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -42,7 +43,7 @@ namespace AvKufarCarParser
 
                     foreach (var searchFilter in _searchFilters)
                     {
-                        var newAds = await _kufarProcessor.GetNewAds(searchFilter.FilterParameters);
+                        var newAds = await _kufarProcessor.ScanForNewAds(searchFilter);
                         await Task.WhenAll(newAds.Select(ad => NotifyUsers(ad, searchFilter.ChatIds)));
                     }
 
@@ -65,7 +66,7 @@ namespace AvKufarCarParser
 
                 if (messageText.StartsWith("/subscribe"))
                 {
-                    var parameters = ParseFilterParameters(messageText);
+                    var parameters = AppHelper.ParseFilterParameters(messageText);
                     var result = await _dbService.AddOrUpdateSubscriptionAsync(chatId, parameters);
 
                     if (result != null)
@@ -82,12 +83,13 @@ namespace AvKufarCarParser
                 }
                 else if (messageText.StartsWith("/unsubscribe"))
                 {
-                    var parameters = ParseFilterParameters(messageText);
+                    var parameters = AppHelper.ParseFilterParameters(messageText);
                     var result = await _dbService.RemoveSubscriptionAsync(chatId, parameters);
 
-                    if (result)
+                    if (result != null)
                     {
                         await bot.SendMessage(chatId, "Вы отписались от уведомлений о новых объявлениях!", cancellationToken: token);
+                        _searchFilters.Remove(result);
                         _logger.LogInformation($"User {chatId} has unsubscribed.");
                     }
                     else
@@ -107,19 +109,12 @@ namespace AvKufarCarParser
 
         private async Task NotifyUsers(Ad ad, List<long> chatIds)
         {
-            string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +
-                $"\n\nНазвание автомобиля: {ad.CarParams.Brand} {ad.CarParams.Model}" +
-                $"\nЦена: ${ad.Price}" +
-                $"\nОбласть: {ad.CarParams.Region}" +
-                $"\nГород: {ad.CarParams.City}" +
-                $"\nСсылка на объявление: {ad.Link}" +
-                $"\n\nХарактеристики автомобиля:" +
-                $"\nДвигатель: {ad.CarParams.FuelType} {ad.CarParams.EngineCapacity}" +
-                $"\nПробег: {ad.CarParams.Mileage} км" +
-                $"\nГод выпуска: {ad.CarParams.Year}" +
-                $"\nКоробка передач: {ad.CarParams.GearboxType}" +
-                $"\nТип кузова: {ad.CarParams.BodyType}" +
-                $"\nПривод: {ad.CarParams.DriveType}";
+            string message = ad switch
+            {
+                CarAd carAd => AppHelper.GetNotifyMessage(carAd),
+                BikeAd bikeAd => AppHelper.GetNotifyMessage(bikeAd),
+                _ => AppHelper.GetNotifyMessage(ad)
+            };
 
             foreach (var userId in chatIds)
             {
@@ -136,24 +131,7 @@ namespace AvKufarCarParser
                 }
             }
 
-            _logger.LogInformation($"{_searchFilters.Count} user(s) have been notified about {ad.CarParams.Brand} {ad.CarParams.Model} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
-        }
-
-        private List<FilterParameter> ParseFilterParameters(string messageText)
-        {
-            var parameters = new List<FilterParameter>();
-            var parts = messageText.Split(' ').Skip(1);
-
-            foreach (var part in parts)
-            {
-                var kv = part.Split('=');
-                if (kv.Length == 2)
-                {
-                    parameters.Add(new FilterParameter { QueryName = kv[0], Value = kv[1] });
-                }
-            }
-
-            return parameters;
+            _logger.LogInformation($"{_searchFilters.Count} user(s) have been notified about {ad.Subject} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
         }
     }
 }

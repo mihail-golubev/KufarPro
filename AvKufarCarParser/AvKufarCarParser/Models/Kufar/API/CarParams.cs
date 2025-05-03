@@ -1,4 +1,4 @@
-﻿namespace AvKufarCarParser.Models.Kufar
+﻿namespace AvKufarCarParser.Models.Kufar.API
 {
     public class CarParams
     {

@@ -1,6 +1,6 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using LiteDB;
 using MongoDB.Bson;
-using LiteDB;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace AvKufarCarParser.Models.Database
 {
@@ -15,14 +15,23 @@ namespace AvKufarCarParser.Models.Database
         [BsonField("filterParameters")]
         public List<FilterParameter> FilterParameters { get; set; }
 
+        [BsonElement("latestAdsIds")]
+        [BsonField("latestAdsIds")]
+        public List<int> LatestAdsIds { get; set; }
+
+        [BsonElement("total")]
+        [BsonField("total")]
+        public int Total { get; set; }
+
         [BsonElement("chatIds")]
         [BsonField("chatIds")]
         public List<long> ChatIds { get; set; }
 
         [LiteDB.BsonId]
-        public LiteDB.ObjectId LiteDbId { 
-            get => string.IsNullOrEmpty(Id) ? LiteDB.ObjectId.NewObjectId() : new LiteDB.ObjectId(Id); 
-            set => Id = value.ToString(); 
+        public LiteDB.ObjectId LiteDbId
+        {
+            get => string.IsNullOrEmpty(Id) ? LiteDB.ObjectId.NewObjectId() : new LiteDB.ObjectId(Id);
+            set => Id = value.ToString();
         }
     }
 }

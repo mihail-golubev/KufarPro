@@ -1,4 +1,5 @@
 ﻿using AvKufarCarParser.DataAccess;
+using AvKufarCarParser.Helpers;
 using AvKufarCarParser.Kufar;
 using AvKufarCarParser.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,7 @@ namespace AvKufarCarParser
                     services.AddSingleton<HttpClient>();
                     services.AddSingleton<IMongoClient>(sp =>
                     {
-                        var settings = MongoClientSettings.FromConnectionString(Util.DbConnectionString);
+                        var settings = MongoClientSettings.FromConnectionString(AppHelper.DbConnectionString);
                         settings.ServerApi = new ServerApi(ServerApiVersion.V1);
                         return new MongoClient(settings);
                     });
@@ -32,8 +33,11 @@ namespace AvKufarCarParser
                         new TelegramBotClient(Environment.GetEnvironmentVariable("AV_KUFAR_CAR_PARSER_BOT_TOKEN")));
 
                     services.AddSingleton<KufarProcessor>();
-                    services.AddSingleton<IDbService, LiteDbService>();
+                    services.AddSingleton<LiteDbService>();
                     services.AddHostedService<BotService>();
+
+                    services.AddSingleton<IDbSubscriptionService>(provider => provider.GetRequiredService<LiteDbService>());
+                    services.AddSingleton<IDbUpdaterService>(provider => provider.GetRequiredService<LiteDbService>());
                 })
                 .ConfigureLogging(logging =>
                 {

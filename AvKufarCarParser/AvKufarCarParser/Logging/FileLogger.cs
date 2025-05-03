@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AvKufarCarParser.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace AvKufarCarParser.Logging
 {
@@ -22,7 +23,7 @@ namespace AvKufarCarParser.Logging
                 try
                 {
                     FileInfo fileInfo = new FileInfo(_filePath);
-                    if (fileInfo.Exists && fileInfo.Length > Util.MaxFileSize)
+                    if (fileInfo.Exists && fileInfo.Length > AppHelper.MaxFileSize)
                     {
                         File.WriteAllText(_filePath, string.Empty);
                     }

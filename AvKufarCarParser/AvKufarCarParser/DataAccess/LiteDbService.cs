@@ -1,32 +1,33 @@
 ﻿using AvKufarCarParser.EqualityComparers;
+using AvKufarCarParser.Helpers;
 using AvKufarCarParser.Models.Database;
 using LiteDB;
 
 namespace AvKufarCarParser.DataAccess
 {
-    public class LiteDbService : IDbService
+    public class LiteDbService : IDbSubscriptionService, IDbUpdaterService
     {
         private readonly LiteDatabase _database;
-        private readonly ILiteCollection<SearchFilter> _filters;
+        private readonly ILiteCollection<SearchFilter> _searchFilters;
         private readonly object _lock = new object();
 
         public LiteDbService()
         {
-            string dbPath = Path.Combine(AppContext.BaseDirectory, $"{Util.DbName}.db");
+            string dbPath = Path.Combine(AppContext.BaseDirectory, $"{AppHelper.DbName}.db");
             _database = new LiteDatabase(dbPath);
-            _filters = _database.GetCollection<SearchFilter>(Util.CollectionName);
+            _searchFilters = _database.GetCollection<SearchFilter>(AppHelper.CollectionName);
         }
 
         public async Task<List<SearchFilter>> GetAllFiltersAsync()
         {
-            return await Task.Run(() => _filters.FindAll().ToList());
+            return await Task.Run(() => _searchFilters.FindAll().ToList());
         }
 
         public async Task<SearchFilter> GetFilterByParametersAsync(List<FilterParameter> parameters)
         {
             return await Task.Run(() =>
             {
-                return _filters.FindAll().FirstOrDefault(f =>
+                return _searchFilters.FindAll().FirstOrDefault(f =>
                     f.FilterParameters.Count == parameters.Count &&
                     !f.FilterParameters.Except(parameters, new FilterParameterComparer()).Any()
                 );
@@ -42,7 +43,7 @@ namespace AvKufarCarParser.DataAccess
                 if (!existingFilter.ChatIds.Contains(chatId))
                 {
                     existingFilter.ChatIds.Add(chatId);
-                    _filters.Update(existingFilter);
+                    _searchFilters.Update(existingFilter);
                     return existingFilter;
                 }
 
@@ -56,13 +57,13 @@ namespace AvKufarCarParser.DataAccess
                     ChatIds = new List<long> { chatId }
                 };
 
-                _filters.Insert(newFilter);
+                _searchFilters.Insert(newFilter);
 
                 return newFilter;
             }
         }
 
-        public async Task<bool> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters)
+        public async Task<SearchFilter> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters)
         {
             var existingFilter = await GetFilterByParametersAsync(parameters);
 
@@ -74,18 +75,33 @@ namespace AvKufarCarParser.DataAccess
 
                     if (existingFilter.ChatIds.Count == 0)
                     {
-                        _filters.Delete(existingFilter.Id);
+                        _searchFilters.Delete(existingFilter.Id);
                     }
                     else
                     {
-                        _filters.Update(existingFilter);
+                        _searchFilters.Update(existingFilter);
                     }
 
-                    return true;
+                    return existingFilter;
                 }
             }
 
-            return false;
+            return null;
+        }
+
+        public Task UpdateSearchFilter(SearchFilter searchFilter)
+        {
+            lock (_lock)
+            {
+                var existingFilter = _searchFilters.FindById(searchFilter.LiteDbId) ?? throw new InvalidOperationException("Filter not found.");
+
+                existingFilter.Total = searchFilter.Total;
+                existingFilter.LatestAdsIds = searchFilter.LatestAdsIds;
+
+                _searchFilters.Update(existingFilter);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }
