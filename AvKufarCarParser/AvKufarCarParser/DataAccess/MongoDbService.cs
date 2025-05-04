@@ -6,23 +6,23 @@ namespace AvKufarCarParser.DataAccess
 {
     public class MongoDbService : IDbSubscriptionService, IDbUpdaterService
     {
-        private readonly IMongoCollection<SearchFilter> _searchFilters;
+        private readonly IMongoCollection<SearchFilter> _searchFiltersCollection;
 
         public MongoDbService(IMongoClient client)
         {
             var database = client.GetDatabase(AppHelper.DbName);
-            _searchFilters = database.GetCollection<SearchFilter>(AppHelper.CollectionName);
+            _searchFiltersCollection = database.GetCollection<SearchFilter>(AppHelper.CollectionName);
         }
 
         public async Task<List<SearchFilter>> GetAllFiltersAsync()
         {
-            return await _searchFilters.Find(_ => true).ToListAsync();
+            return await _searchFiltersCollection.Find(_ => true).ToListAsync();
         }
 
         public async Task<SearchFilter> GetFilterByParametersAsync(List<FilterParameter> parameters)
         {
             var filterDefinition = Builders<SearchFilter>.Filter.Eq(f => f.FilterParameters, parameters);
-            return await _searchFilters.Find(filterDefinition).FirstOrDefaultAsync();
+            return await _searchFiltersCollection.Find(filterDefinition).FirstOrDefaultAsync();
         }
 
         public async Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, List<FilterParameter> parameters)
@@ -34,7 +34,7 @@ namespace AvKufarCarParser.DataAccess
                 if (!existingFilter.ChatIds.Contains(chatId))
                 {
                     existingFilter.ChatIds.Add(chatId);
-                    await _searchFilters.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
+                    await _searchFiltersCollection.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
 
                     return existingFilter;
                 }
@@ -49,7 +49,7 @@ namespace AvKufarCarParser.DataAccess
                     ChatIds = new List<long> { chatId }
                 };
 
-                await _searchFilters.InsertOneAsync(newFilter);
+                await _searchFiltersCollection.InsertOneAsync(newFilter);
 
                 return newFilter;
             }
@@ -67,11 +67,11 @@ namespace AvKufarCarParser.DataAccess
 
                     if (existingFilter.ChatIds.Count == 0)
                     {
-                        await _searchFilters.DeleteOneAsync(f => f.Id == existingFilter.Id);
+                        await _searchFiltersCollection.DeleteOneAsync(f => f.Id == existingFilter.Id);
                     }
                     else
                     {
-                        await _searchFilters.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
+                        await _searchFiltersCollection.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
                     }
 
                     return existingFilter;
@@ -88,7 +88,7 @@ namespace AvKufarCarParser.DataAccess
                 .Set(x => x.Total, searchFilter.Total)
                 .Set(x => x.LatestAdsIds, searchFilter.LatestAdsIds);
 
-            await _searchFilters.UpdateOneAsync(filter, updatedFilter);
+            await _searchFiltersCollection.UpdateOneAsync(filter, updatedFilter);
         }
     }
 }

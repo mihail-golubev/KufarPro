@@ -30,7 +30,7 @@ namespace AvKufarCarParser.Models.Database
         [LiteDB.BsonId]
         public LiteDB.ObjectId LiteDbId
         {
-            get => string.IsNullOrEmpty(Id) ? LiteDB.ObjectId.NewObjectId() : new LiteDB.ObjectId(Id);
+            get => new LiteDB.ObjectId(Id);
             set => Id = value.ToString();
         }
     }
