@@ -56,7 +56,7 @@ namespace AvKufarCarParser.Models.Kufar.API
         {
             get
             {
-                if (double.TryParse(RawPriceByn, out double parsedPrice))
+                if (double.TryParse(RawPriceUsd, out double parsedPrice))
                 {
                     return parsedPrice / 100;
                 }
