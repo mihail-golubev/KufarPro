@@ -3,6 +3,7 @@ using AvKufarCarParser.Helpers;
 using AvKufarCarParser.Kufar;
 using AvKufarCarParser.Models.Database;
 using AvKufarCarParser.Models.Kufar.API;
+using AvKufarCarParser.Models.Kufar.HelperModels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -13,27 +14,33 @@ namespace AvKufarCarParser
 {
     public class BotService : BackgroundService
     {
-        private List<SearchFilter> _searchFilters;
+        private readonly List<SearchFilter> _searchFilters;
+        private readonly Dictionary<long, UserFilterState> _userFilterStates = new();
 
         private readonly ITelegramBotClient _botClient;
         private readonly KufarProcessor _kufarProcessor;
         private readonly IDbSubscriptionService _dbService;
         private readonly ILogger<BotService> _logger;
+        private readonly FilterMessageHandler _filterMessageHandler;
 
-        public BotService(ITelegramBotClient botClient, KufarProcessor kufarProcessor, IDbSubscriptionService dbService, ILogger<BotService> logger)
+        public BotService(
+            ITelegramBotClient botClient,
+            KufarProcessor kufarProcessor,
+            IDbSubscriptionService dbService,
+            ILogger<BotService> logger)
         {
             _botClient = botClient;
             _kufarProcessor = kufarProcessor;
             _dbService = dbService;
             _logger = logger;
-
             _searchFilters = _dbService.GetAllFiltersAsync().Result;
+            _filterMessageHandler = new FilterMessageHandler(_userFilterStates, _dbService, _searchFilters, _botClient, _logger);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation("AvKufarCarParser Bot 1.4.0 has been started.");
+            _logger.LogInformation("KufarPro Bot 2.0.0 has been started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -49,7 +56,6 @@ namespace AvKufarCarParser
 
                     await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }
-
                 catch (Exception ex)
                 {
                     _logger.LogError($"Some error occured: {ex.GetType()}::{ex.Message}\nContinue scanning..");
@@ -59,45 +65,13 @@ namespace AvKufarCarParser
 
         private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
-            if (update.Type == UpdateType.Message && update.Message!.Text != null)
+            if (update.Type == UpdateType.Message && update.Message?.Text != null)
             {
-                long chatId = update.Message.Chat.Id;
-                string messageText = update.Message.Text.ToLower();
-
-                if (messageText.StartsWith("/subscribe"))
-                {
-                    var urlQuery = AppHelper.ParseFilterParameters(messageText);
-                    var result = await _dbService.AddOrUpdateSubscriptionAsync(chatId, urlQuery);
-
-                    if (result != null)
-                    {
-                        await bot.SendMessage(chatId, "Вы подписались на уведомления о новых объявлениях!", cancellationToken: token);
-                        _searchFilters.Add(result);
-                        _logger.LogInformation($"User {chatId} has subscribed.");
-                    }
-                    else
-                    {
-                        await bot.SendMessage(chatId, "Что-то пошло не так. Возможно, вы уже подписаны на уведомления по этому фильтру.", cancellationToken: token);
-                        _logger.LogInformation($"User {chatId} has not been subscribed.");
-                    }
-                }
-                else if (messageText.StartsWith("/unsubscribe"))
-                {
-                    var parameters = AppHelper.ParseFilterParameters(messageText);
-                    var result = await _dbService.RemoveSubscriptionAsync(chatId, parameters);
-
-                    if (result != null)
-                    {
-                        await bot.SendMessage(chatId, "Вы отписались от уведомлений о новых объявлениях!", cancellationToken: token);
-                        _searchFilters.Remove(result);
-                        _logger.LogInformation($"User {chatId} has unsubscribed.");
-                    }
-                    else
-                    {
-                        await bot.SendMessage(chatId, "Что-то пошло не так. Возможно, вы не подписаны на уведомления по этому фильтру.", cancellationToken: token);
-                        _logger.LogInformation($"User {chatId} has not been unsubscribed.");
-                    }
-                }
+                await _filterMessageHandler.HandleMessageAsync(update.Message, token);
+            }
+            else if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery != null)
+            {
+                await _filterMessageHandler.HandleCallbackQueryAsync(update.CallbackQuery, token);
             }
         }
 

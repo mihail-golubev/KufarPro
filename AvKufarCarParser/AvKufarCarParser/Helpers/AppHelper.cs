@@ -108,5 +108,77 @@ namespace AvKufarCarParser.Helpers
 
             return string.Join("&", sorted);
         }
+
+        public static string BuildQuery(UserFilterState state)
+        {
+            var parameters = new List<string>();
+
+            if (!string.IsNullOrEmpty(state.Category))
+            {
+                parameters.Add($"cat={state.Category}");
+            }
+
+            if (!string.IsNullOrEmpty(state.Region))
+            {
+                parameters.Add($"rgn={state.Region}");
+            }
+
+            if (state.PriceRange.From.HasValue && state.PriceRange.To.HasValue)
+            {
+                parameters.Add($"prc=r:{state.PriceRange.From},{state.PriceRange.To}");
+            }
+            else if (state.PriceRange.From.HasValue)
+            {
+                parameters.Add($"prc=r:{state.PriceRange.From},");
+            }
+            else if (state.PriceRange.To.HasValue)
+            {
+                parameters.Add($"prc=r:, {state.PriceRange.To}");
+            }
+
+            return string.Join("&", parameters);
+        }
+
+        public static PriceRange ParsePriceRange(string text)
+        {
+            var priceRange = new PriceRange { From = null, To = null };
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return priceRange;
+            }
+
+            text = text.Trim().Replace("–", "-");
+            var parts = text.Split('-', StringSplitOptions.None);
+
+            if (parts.Length == 2)
+            {
+                if (int.TryParse(parts[0].Trim(), out int from) && int.TryParse(parts[1].Trim(), out int to))
+                {
+                    priceRange.From = from;
+                    priceRange.To = to;
+                }
+                else if (int.TryParse(parts[0].Trim(), out from) && string.IsNullOrWhiteSpace(parts[1]))
+                {
+                    priceRange.From = from;
+                    priceRange.To = int.MaxValue;
+                }
+                else if (string.IsNullOrWhiteSpace(parts[0]) && int.TryParse(parts[1].Trim(), out to))
+                {
+                    priceRange.From = 0;
+                    priceRange.To = to;
+                }
+            }
+            else if (parts.Length == 1)
+            {
+                if (int.TryParse(parts[0].Trim(), out int value))
+                {
+                    priceRange.From = value;
+                    priceRange.To = value;
+                }
+            }
+
+            return priceRange;
+        }
     }
 }

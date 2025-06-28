@@ -11,9 +11,6 @@ namespace AvKufarCarParser.Models.Database
         [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
         public string Id { get; set; }
 
-        //[BsonElement("filterParameters")]
-        //[BsonField("filterParameters")]
-        //public List<FilterParameter> FilterParameters { get; set; }
         [BsonElement("urlQuery")]
         [BsonField("urlQuery")]
         public string UrlQuery {  get; set; }
@@ -21,10 +18,6 @@ namespace AvKufarCarParser.Models.Database
         [BsonElement("latestAdsIds")]
         [BsonField("latestAdsIds")]
         public HashSet<int> LatestAdsIds { get; set; }
-
-        //[BsonElement("total")]
-        //[BsonField("total")]
-        //public int Total { get; set; }
 
         [BsonElement("chatIds")]
         [BsonField("chatIds")]
