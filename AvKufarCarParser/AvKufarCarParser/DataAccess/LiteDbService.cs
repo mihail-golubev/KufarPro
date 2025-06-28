@@ -1,5 +1,4 @@
-﻿using AvKufarCarParser.EqualityComparers;
-using AvKufarCarParser.Helpers;
+﻿using AvKufarCarParser.Helpers;
 using AvKufarCarParser.Models.Database;
 using LiteDB;
 
@@ -23,20 +22,19 @@ namespace AvKufarCarParser.DataAccess
             return await Task.Run(() => _searchFiltersCollection.FindAll().ToList());
         }
 
-        public async Task<SearchFilter> GetFilterByParametersAsync(List<FilterParameter> parameters)
+        public async Task<SearchFilter> GetFilterByParametersAsync(string urlQuery)
         {
             return await Task.Run(() =>
             {
-                return _searchFiltersCollection.FindAll().FirstOrDefault(f =>
-                    f.FilterParameters.Count == parameters.Count &&
-                    !f.FilterParameters.Except(parameters, new FilterParameterComparer()).Any()
-                );
+                return _searchFiltersCollection
+                    .FindAll()
+                    .FirstOrDefault(filter => string.Equals(filter.UrlQuery, urlQuery, StringComparison.OrdinalIgnoreCase));
             });
         }
 
-        public async Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, List<FilterParameter> parameters)
+        public async Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, string urlQuery)
         {
-            var existingFilter = await GetFilterByParametersAsync(parameters);
+            var existingFilter = await GetFilterByParametersAsync(urlQuery);
 
             if (existingFilter != null)
             {
@@ -54,7 +52,7 @@ namespace AvKufarCarParser.DataAccess
                 var newFilter = new SearchFilter
                 {
                     Id = ObjectId.NewObjectId().ToString(),
-                    FilterParameters = parameters,
+                    UrlQuery = urlQuery,
                     ChatIds = new List<long> { chatId }
                 };
 
@@ -64,9 +62,9 @@ namespace AvKufarCarParser.DataAccess
             }
         }
 
-        public async Task<SearchFilter> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters)
+        public async Task<SearchFilter> RemoveSubscriptionAsync(long chatId, string urlQuery)
         {
-            var existingFilter = await GetFilterByParametersAsync(parameters);
+            var existingFilter = await GetFilterByParametersAsync(urlQuery);
 
             if (existingFilter != null)
             {
@@ -94,10 +92,7 @@ namespace AvKufarCarParser.DataAccess
         {
             lock (_lock)
             {
-                var f = _searchFiltersCollection.FindAll().ToList();
                 var existingFilter = _searchFiltersCollection.FindById(searchFilter.LiteDbId) ?? throw new InvalidOperationException("Filter not found.");
-
-                existingFilter.Total = searchFilter.Total;
                 existingFilter.LatestAdsIds = searchFilter.LatestAdsIds;
 
                 _searchFiltersCollection.Update(existingFilter);

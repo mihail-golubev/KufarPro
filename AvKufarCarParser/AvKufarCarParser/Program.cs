@@ -33,11 +33,11 @@ namespace AvKufarCarParser
                         new TelegramBotClient(Environment.GetEnvironmentVariable("AV_KUFAR_CAR_PARSER_BOT_TOKEN")));
 
                     services.AddSingleton<KufarProcessor>();
-                    services.AddSingleton<LiteDbService>();
+                    services.AddSingleton<MongoDbService>();
                     services.AddHostedService<BotService>();
 
-                    services.AddSingleton<IDbSubscriptionService>(provider => provider.GetRequiredService<LiteDbService>());
-                    services.AddSingleton<IDbUpdaterService>(provider => provider.GetRequiredService<LiteDbService>());
+                    services.AddSingleton<IDbSubscriptionService>(provider => provider.GetRequiredService<MongoDbService>());
+                    services.AddSingleton<IDbUpdaterService>(provider => provider.GetRequiredService<MongoDbService>());
                 })
                 .ConfigureLogging(logging =>
                 {

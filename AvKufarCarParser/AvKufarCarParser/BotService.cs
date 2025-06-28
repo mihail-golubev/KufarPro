@@ -33,7 +33,7 @@ namespace AvKufarCarParser
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation("AvKufarCarParser Bot 1.3.0 has been started.");
+            _logger.LogInformation("AvKufarCarParser Bot 1.4.0 has been started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -66,8 +66,8 @@ namespace AvKufarCarParser
 
                 if (messageText.StartsWith("/subscribe"))
                 {
-                    var parameters = AppHelper.ParseFilterParameters(messageText);
-                    var result = await _dbService.AddOrUpdateSubscriptionAsync(chatId, parameters);
+                    var urlQuery = AppHelper.ParseFilterParameters(messageText);
+                    var result = await _dbService.AddOrUpdateSubscriptionAsync(chatId, urlQuery);
 
                     if (result != null)
                     {

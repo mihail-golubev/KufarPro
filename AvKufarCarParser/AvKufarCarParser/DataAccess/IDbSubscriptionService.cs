@@ -6,10 +6,10 @@ namespace AvKufarCarParser.DataAccess
     {
         public Task<List<SearchFilter>> GetAllFiltersAsync();
 
-        public Task<SearchFilter> GetFilterByParametersAsync(List<FilterParameter> parameters);
+        public Task<SearchFilter> GetFilterByParametersAsync(string urlQuery);
 
-        public Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, List<FilterParameter> parameters);
+        public Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, string urlQuery);
 
-        public Task<SearchFilter> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters);
+        public Task<SearchFilter> RemoveSubscriptionAsync(long chatId, string urlQuery);
     }
 }
