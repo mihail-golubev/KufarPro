@@ -39,7 +39,6 @@ namespace AvKufarCarParser.Converters
 
             return new SearchResult
             {
-                Total = total,
                 Ads = ads
             };
         }

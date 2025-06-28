@@ -19,22 +19,22 @@ namespace AvKufarCarParser.DataAccess
             return await _searchFiltersCollection.Find(_ => true).ToListAsync();
         }
 
-        public async Task<SearchFilter> GetFilterByParametersAsync(List<FilterParameter> parameters)
+        public async Task<SearchFilter> GetFilterByParametersAsync(string urlQuery)
         {
-            var filterDefinition = Builders<SearchFilter>.Filter.Eq(f => f.FilterParameters, parameters);
+            var filterDefinition = Builders<SearchFilter>.Filter.Eq(f => f.UrlQuery, urlQuery);
             return await _searchFiltersCollection.Find(filterDefinition).FirstOrDefaultAsync();
         }
 
-        public async Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, List<FilterParameter> parameters)
+        public async Task<SearchFilter> AddOrUpdateSubscriptionAsync(long chatId, string urlQuery)
         {
-            var existingFilter = await GetFilterByParametersAsync(parameters);
+            var existingFilter = await GetFilterByParametersAsync(urlQuery);
 
             if (existingFilter != null)
             {
                 if (!existingFilter.ChatIds.Contains(chatId))
                 {
                     existingFilter.ChatIds.Add(chatId);
-                    await _searchFiltersCollection.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
+                    await _searchFiltersCollection.ReplaceOneAsync(filter => filter.Id == existingFilter.Id, existingFilter);
 
                     return existingFilter;
                 }
@@ -45,7 +45,7 @@ namespace AvKufarCarParser.DataAccess
             {
                 var newFilter = new SearchFilter
                 {
-                    FilterParameters = parameters,
+                    UrlQuery = urlQuery,
                     ChatIds = new List<long> { chatId }
                 };
 
@@ -55,9 +55,9 @@ namespace AvKufarCarParser.DataAccess
             }
         }
 
-        public async Task<SearchFilter> RemoveSubscriptionAsync(long chatId, List<FilterParameter> parameters)
+        public async Task<SearchFilter> RemoveSubscriptionAsync(long chatId, string urlQuery)
         {
-            var existingFilter = await GetFilterByParametersAsync(parameters);
+            var existingFilter = await GetFilterByParametersAsync(urlQuery);
 
             if (existingFilter != null)
             {
@@ -67,11 +67,11 @@ namespace AvKufarCarParser.DataAccess
 
                     if (existingFilter.ChatIds.Count == 0)
                     {
-                        await _searchFiltersCollection.DeleteOneAsync(f => f.Id == existingFilter.Id);
+                        await _searchFiltersCollection.DeleteOneAsync(filter => filter.Id == existingFilter.Id);
                     }
                     else
                     {
-                        await _searchFiltersCollection.ReplaceOneAsync(f => f.Id == existingFilter.Id, existingFilter);
+                        await _searchFiltersCollection.ReplaceOneAsync(filter => filter.Id == existingFilter.Id, existingFilter);
                     }
 
                     return existingFilter;
@@ -85,7 +85,6 @@ namespace AvKufarCarParser.DataAccess
         {
             var filter = Builders<SearchFilter>.Filter.Eq(x => x.Id, searchFilter.Id);
             var updatedFilter = Builders<SearchFilter>.Update
-                .Set(x => x.Total, searchFilter.Total)
                 .Set(x => x.LatestAdsIds, searchFilter.LatestAdsIds);
 
             await _searchFiltersCollection.UpdateOneAsync(filter, updatedFilter);
