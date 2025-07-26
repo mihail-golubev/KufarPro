@@ -38,7 +38,7 @@ namespace KufarPro.Handlers
 
             await HandlePriceInput(messageText, chatId, token);
 
-            await HandleSubscribeUnsibscribeAction(messageText, chatId, token);
+            await HandleSubscribeUnsubscribeAction(messageText, chatId, token);
         }
 
         public async Task HandleCallbackQueryAsync(CallbackQuery callbackQuery, CancellationToken token)
@@ -128,7 +128,7 @@ namespace KufarPro.Handlers
             await _bot.SendMessage(chatId, "Выберите область:", replyMarkup: keyboard, cancellationToken: token);
         }
 
-        private async Task HandleSubscribeUnsibscribeAction(string messageText, long chatId, CancellationToken token)
+        private async Task HandleSubscribeUnsubscribeAction(string messageText, long chatId, CancellationToken token)
         {
             if (messageText.StartsWith("/subscribe"))
             {
@@ -150,6 +150,12 @@ namespace KufarPro.Handlers
                     await _bot.SendMessage(chatId, "Что-то пошло не так. Возможно, вы не подписаны на уведомления по этому фильтру.", cancellationToken: token);
                 }
             }
+            //else
+            //{
+            //    await _bot.SendMessage(chatId, "Я не понимаю эту команду. Список доступных команд:" +
+            //        "\n1) /subscribe - подписаться на уведомления о новых объявлениях" +
+            //        "\n2) /unsubscribe - отписаться от уведомлений о новых объявлениях", cancellationToken: token);
+            //}
         }
 
         private async Task HandlePriceInput(string messageText, long chatId, CancellationToken token)
@@ -189,7 +195,7 @@ namespace KufarPro.Handlers
             if (result != null)
             {
                 await _bot.SendMessage(chatId, "Вы успешно подписаны на уведомления с выбранными параметрами!", cancellationToken: token);
-                _searchFilters.Add(result);
+                _searchFilters.AddOrUpdate(result);
                 _logger.LogInformation($"User {chatId} has subscribed with filter: {query}");
 
                 _userStates.Remove(chatId);

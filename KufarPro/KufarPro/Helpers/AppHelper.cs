@@ -1,4 +1,5 @@
-﻿using KufarPro.Models.Kufar.API;
+﻿using KufarPro.Models.Database;
+using KufarPro.Models.Kufar.API;
 using KufarPro.Models.Kufar.HelperModels;
 
 namespace KufarPro.Helpers
@@ -168,6 +169,28 @@ namespace KufarPro.Helpers
             }
 
             return priceRange;
+        }
+
+        public static List<SearchFilter> AddOrUpdate(this List<SearchFilter> searchFilters, SearchFilter newFilter)
+        {
+            var existingFilter = searchFilters.FirstOrDefault(filter => filter.UrlQuery == newFilter.UrlQuery);
+
+            if (existingFilter != null)
+            {
+                foreach (var chatId in newFilter.ChatIds)
+                {
+                    if (!existingFilter.ChatIds.Contains(chatId))
+                    {
+                        existingFilter.ChatIds.Add(chatId);
+                    }
+                }
+            }
+            else
+            {
+                searchFilters.Add(newFilter);
+            }
+
+            return searchFilters;
         }
     }
 }

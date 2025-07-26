@@ -46,7 +46,7 @@ namespace KufarPro
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation($"{_botSettings.BotType} KufarPro Bot 2.1.0 has been started.");
+            _logger.LogInformation($"{_botSettings.BotType} KufarPro Bot 2.1.1 has been started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
