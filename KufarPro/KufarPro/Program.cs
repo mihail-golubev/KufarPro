@@ -1,7 +1,7 @@
 ﻿using KufarPro.DataAccess;
-using KufarPro.Kufar;
 using KufarPro.Logging;
 using KufarPro.Models.Settings;
+using KufarPro.Processors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

@@ -6,7 +6,7 @@ using KufarPro.Models.Kufar.API;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace KufarPro.Kufar
+namespace KufarPro.Processors
 {
     public class KufarProcessor
     {
