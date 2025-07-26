@@ -24,6 +24,7 @@ namespace KufarPro.Models.Database
         public List<long> ChatIds { get; set; }
 
         [LiteDB.BsonId]
+        [MongoDB.Bson.Serialization.Attributes.BsonIgnore]
         public LiteDB.ObjectId LiteDbId
         {
             get => new LiteDB.ObjectId(Id);
