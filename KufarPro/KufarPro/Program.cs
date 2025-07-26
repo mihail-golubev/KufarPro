@@ -60,18 +60,16 @@ namespace KufarPro
                     services.AddSingleton<IDbSubscriptionService>(provider => provider.GetRequiredService<MongoDbService>());
                     services.AddSingleton<IDbUpdaterService>(provider => provider.GetRequiredService<MongoDbService>());
 
-                    services.AddSingleton<ILoggerProvider>(sp =>
+                    services.AddLogging(logging =>
                     {
+                        logging.ClearProviders();
+                        logging.AddSimpleConsole(options =>
+                        {
+                            options.TimestampFormat = "[dd/MM/yyyy HH:mm:ss] ";
+                        });
+
                         var logSettings = context.Configuration.GetSection("LogSettings").Get<LogSettings>();
-                        return new FileLoggerProvider(Path.Combine(AppContext.BaseDirectory, logSettings.LogFileName), logSettings.MaxLogFileSize);
-                    });
-                })
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.AddSimpleConsole(options =>
-                    {
-                        options.TimestampFormat = "[dd/MM/yyyy HH:mm:ss] ";
+                        logging.AddProvider(new FileLoggerProvider(Path.Combine(AppContext.BaseDirectory, logSettings.LogFileName), logSettings.MaxLogFileSize));
                     });
                 })
                 .Build();
