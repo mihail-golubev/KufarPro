@@ -2,7 +2,6 @@
 using KufarPro.Helpers;
 using KufarPro.Models.Database;
 using KufarPro.Models.Kufar.API;
-using KufarPro;
 using KufarPro.Models.Kufar.HelperModels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,6 +11,7 @@ using Telegram.Bot.Types.Enums;
 using KufarPro.Models.Settings;
 using Microsoft.Extensions.Options;
 using KufarPro.Processors;
+using KufarPro.Handlers;
 
 namespace KufarPro
 {

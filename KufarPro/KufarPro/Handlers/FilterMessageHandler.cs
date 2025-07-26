@@ -7,7 +7,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace KufarPro
+namespace KufarPro.Handlers
 {
     public class FilterMessageHandler
     {
