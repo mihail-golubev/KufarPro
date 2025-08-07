@@ -1,6 +1,6 @@
 using KufarPro.Api.Auth;
-using KufarPro.Api.Models;
 using KufarPro.Api.Services.Interfaces;
+using KufarPro.Shared.Models.Search;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KufarPro.Api.Controllers
