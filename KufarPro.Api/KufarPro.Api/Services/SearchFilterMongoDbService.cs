@@ -1,5 +1,5 @@
-﻿using KufarPro.Api.Models;
-using KufarPro.Api.Services.Interfaces;
+﻿using KufarPro.Api.Services.Interfaces;
+using KufarPro.Shared.Models.Search;
 using MongoDB.Driver;
 
 namespace KufarPro.Api.Services;

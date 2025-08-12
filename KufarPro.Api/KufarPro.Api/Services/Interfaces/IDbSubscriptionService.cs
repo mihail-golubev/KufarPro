@@ -1,4 +1,4 @@
-﻿using KufarPro.Api.Models;
+﻿using KufarPro.Shared.Models.Search;
 
 namespace KufarPro.Api.Services.Interfaces
 {

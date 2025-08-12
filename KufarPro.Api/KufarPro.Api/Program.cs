@@ -1,6 +1,6 @@
-using KufarPro.Api.Models;
 using KufarPro.Api.Services;
 using KufarPro.Api.Services.Interfaces;
+using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
