@@ -31,6 +31,31 @@ namespace KufarPro.Scanner.Helpers
             };
         }
 
+        public static BotType GetBotType(string urlQuery)
+        {
+            var adType = GetAdType(urlQuery);
+
+            // Auto
+            if (adType == AdType.Car || adType == AdType.Motorcycle)
+            {
+                return BotType.Auto;
+            }
+            // Real estate
+            else if (adType == AdType.Flat || adType == AdType.House || adType == AdType.Garage)
+            {
+                return BotType.RealEstate;
+            }
+            // Other
+            else if (adType == AdType.Bicycle || adType == AdType.Other)
+            {
+                return BotType.Other;
+            }
+            else
+            {
+                return BotType.Unknown;
+            }
+        }
+
         public static string GetNotifyMessage(AutoAd ad)
         {
             string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +

@@ -2,6 +2,7 @@ using KufarPro.Scanner.HttpClients;
 using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Scanner.Processors;
 using KufarPro.Scanner.Services;
+using KufarPro.Scanner.Services.Interfaces;
 using KufarPro.Shared.Models.Settings;
 using System.Net.Http.Headers;
 
@@ -15,6 +16,7 @@ namespace KufarPro.Scanner
 
             var httpClientsSettings = new HttpClientsSettings();
             builder.Configuration.GetSection("HttpClientsSettings").Bind(httpClientsSettings);
+            builder.Services.Configure<MessageQueueSettings>(builder.Configuration.GetSection("MessageQueue"));
 
             builder.Services.AddHttpClient("SearchFiltersApiClient", client =>
             {
@@ -32,6 +34,7 @@ namespace KufarPro.Scanner
             builder.Services.AddSingleton<IUpdateSearchFilterApiClient, SearchFiltersApiClient>();
             builder.Services.AddSingleton<IGetSearchFiltersApiClient, SearchFiltersApiClient>();
             builder.Services.AddSingleton<IKufarApiClient, KufarClient>();
+            builder.Services.AddSingleton<IMessageQueueService, MessageQueueService>();
             builder.Services.AddSingleton<KufarProcessor>();
             builder.Services.AddHostedService<ScannerService>();
 
