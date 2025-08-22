@@ -23,7 +23,6 @@ namespace KufarPro.Bot
                 .ConfigureServices((context, services) =>
                 {
                     services.Configure<BotSettings>(context.Configuration.GetSection("BotSettings"));
-                    services.Configure<DatabaseSettings>(context.Configuration.GetSection("DatabaseSettings"));
                     services.Configure<LogSettings>(context.Configuration.GetSection("LogSettings"));
 
                     services.AddLogging(configure => configure.AddSimpleConsole());
