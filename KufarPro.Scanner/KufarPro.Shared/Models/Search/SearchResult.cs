@@ -6,7 +6,7 @@ namespace KufarPro.Shared.Models.Search
     public class SearchResult
     {
         [JsonPropertyName("ads")]
-        public List<Ad> Ads { get; set; }
+        public IEnumerable<Ad> Ads { get; set; } = new List<Ad>();
 
         [JsonPropertyName("total")]
         public int Total { get; set; }

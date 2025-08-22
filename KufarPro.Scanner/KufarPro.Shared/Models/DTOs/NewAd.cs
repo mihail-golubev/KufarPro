@@ -1,11 +1,9 @@
-﻿using KufarPro.Shared.Converters;
+﻿using KufarPro.Shared.Models.Ads;
 using KufarPro.Shared.Models.HelperModels;
-using System.Text.Json.Serialization;
 
-namespace KufarPro.Shared.Models.Ads
+namespace KufarPro.Shared.Models.DTOs
 {
-    [JsonConverter(typeof(AdConverter))]
-    public class Ad
+    public class NewAd
     {
         public int Id { get; set; }
         public string Url { get; set; }
@@ -18,7 +16,7 @@ namespace KufarPro.Shared.Models.Ads
         public string Region { get; set; }
         public bool IsPhoneHidden { get; set; }
         public IEnumerable<string> Images { get; set; } = new List<string>();
-        public AdType Type { get; set; }
-        public IEnumerable<AdParameter> Parameters { get; set; } = new List<AdParameter>();
+        public AdType AdType { get; set; }
+        public IEnumerable<string> Parameters { get; set; } = new List<string>();
     }
 }

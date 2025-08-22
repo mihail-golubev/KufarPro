@@ -1,4 +1,4 @@
-﻿namespace KufarPro.Shared.Models.HelperModels
+﻿namespace KufarPro.Shared.Models.Ads
 {
     public enum AdType
     {

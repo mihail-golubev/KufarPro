@@ -1,11 +1,6 @@
-﻿using KufarPro.Bot.DataAccess;
-using KufarPro.Bot.Handlers;
-using KufarPro.Bot.Helpers;
-using KufarPro.Bot.Models.Database;
+﻿using KufarPro.Bot.Helpers;
 using KufarPro.Bot.Models.Kufar.API;
-using KufarPro.Bot.Models.Kufar.HelperModels;
 using KufarPro.Bot.Models.Settings;
-using KufarPro.Bot.Processors;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,50 +12,30 @@ namespace KufarPro.Bot
 {
     public class BotService : BackgroundService
     {
-        private readonly List<SearchFilter> _searchFilters;
-        private readonly Dictionary<long, UserFilterState> _userFilterStates = new();
-
         private readonly ITelegramBotClient _botClient;
-        private readonly KufarProcessor _kufarProcessor;
-        private readonly IDbSubscriptionService _dbService;
         private readonly BotSettings _botSettings;
         private readonly ILogger<BotService> _logger;
-        private readonly FilterMessageHandler _filterMessageHandler;
 
         public BotService(
             ITelegramBotClient botClient,
-            KufarProcessor kufarProcessor,
-            IDbSubscriptionService dbService,
             IOptions<BotSettings> botOptions,
             ILogger<BotService> logger)
         {
             _botClient = botClient;
-            _kufarProcessor = kufarProcessor;
-            _dbService = dbService;
             _botSettings = botOptions.Value;
             _logger = logger;
-            _searchFilters = _dbService.GetAllFiltersAsync().Result;
-            _filterMessageHandler = new FilterMessageHandler(_userFilterStates, _dbService, _searchFilters, _botClient, _logger);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation($"{_botSettings.BotType} KufarPro Bot 2.1.1 has been started.");
+            _logger.LogInformation($"{_botSettings.BotType} KufarPro Bot 3.0.0 has been started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    _logger.LogInformation($"There are {_searchFilters.Count} search filters in database. Looking for new ads..");
-
-                    foreach (var searchFilter in _searchFilters)
-                    {
-                        var newAds = await _kufarProcessor.ScanForNewAds(searchFilter);
-                        await Task.WhenAll(newAds.Select(ad => NotifyUsers(ad, searchFilter.ChatIds)));
-                    }
-
-                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                    
                 }
                 catch (Exception ex)
                 {
@@ -71,14 +46,6 @@ namespace KufarPro.Bot
 
         private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
-            if (update.Type == UpdateType.Message && update.Message?.Text != null)
-            {
-                await _filterMessageHandler.HandleMessageAsync(update.Message, token);
-            }
-            else if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery != null)
-            {
-                await _filterMessageHandler.HandleCallbackQueryAsync(update.CallbackQuery, token);
-            }
         }
 
         private Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken token)
