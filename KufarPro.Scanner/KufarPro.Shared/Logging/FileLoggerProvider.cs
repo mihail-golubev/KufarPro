@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace KufarPro.Bot.Logging
+namespace KufarPro.Shared.Logging
 {
     public class FileLoggerProvider : ILoggerProvider
     {

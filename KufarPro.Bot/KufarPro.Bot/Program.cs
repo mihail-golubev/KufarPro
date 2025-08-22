@@ -1,13 +1,10 @@
-﻿using KufarPro.Bot.DataAccess;
-using KufarPro.Bot.Logging;
-using KufarPro.Bot.Models.Settings;
-using KufarPro.Bot.Processors;
+﻿using KufarPro.Shared.Logging;
+using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 using Telegram.Bot;
 
 namespace KufarPro.Bot
@@ -30,17 +27,7 @@ namespace KufarPro.Bot
                     services.Configure<LogSettings>(context.Configuration.GetSection("LogSettings"));
 
                     services.AddLogging(configure => configure.AddSimpleConsole());
-
                     services.AddSingleton<HttpClient>();
-                    services.AddSingleton<IMongoClient>(sp =>
-                    {
-                        var dbSettings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value;
-                        var mongoClientSettings = MongoClientSettings.FromConnectionString(dbSettings.MongoDbConnectionString);
-                        mongoClientSettings.ServerApi = new ServerApi(ServerApiVersion.V1);
-
-                        return new MongoClient(mongoClientSettings);
-                    });
-
                     services.AddSingleton<ITelegramBotClient>(sp =>
                     {
                         var botOpts = sp.GetRequiredService<IOptions<BotSettings>>().Value;
@@ -53,12 +40,7 @@ namespace KufarPro.Bot
                         return new TelegramBotClient(token);
                     });
 
-                    services.AddSingleton<KufarProcessor>();
-                    services.AddSingleton<MongoDbService>();
                     services.AddHostedService<BotService>();
-
-                    services.AddSingleton<IDbSubscriptionService>(provider => provider.GetRequiredService<MongoDbService>());
-                    services.AddSingleton<IDbUpdaterService>(provider => provider.GetRequiredService<MongoDbService>());
 
                     services.AddLogging(logging =>
                     {

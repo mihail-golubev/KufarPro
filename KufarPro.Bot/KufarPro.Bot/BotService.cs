@@ -1,12 +1,10 @@
-﻿using KufarPro.Bot.Helpers;
-using KufarPro.Bot.Models.Kufar.API;
-using KufarPro.Bot.Models.Settings;
+﻿using KufarPro.Shared.Models.Ads;
+using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace KufarPro.Bot
 {
@@ -35,7 +33,7 @@ namespace KufarPro.Bot
             {
                 try
                 {
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -56,19 +54,14 @@ namespace KufarPro.Bot
 
         private async Task NotifyUsers(Ad ad, List<long> chatIds)
         {
-            string message = ad switch
-            {
-                AutoAd autoAd => AppHelper.GetNotifyMessage(autoAd),
-                BicycleAd bicycleAd => AppHelper.GetNotifyMessage(bicycleAd),
-                _ => AppHelper.GetNotifyMessage(ad)
-            };
+            string message = GetNotifyMessage(ad);
 
             foreach (var userId in chatIds)
             {
-                if (ad.Images.Count > 0)
+                if (ad.Images.ToList().Count > 0)
                 {
-                    var media = ad.Images.Select((img, index) =>
-                        new InputMediaPhoto(img.Link) { Caption = index == 0 ? message : null }).ToArray();
+                    var media = ad.Images.Select((image, index) =>
+                        new InputMediaPhoto(image) { Caption = index == 0 ? message : null }).ToArray();
 
                     await _botClient.SendMediaGroup(userId, media);
                 }
@@ -78,7 +71,18 @@ namespace KufarPro.Bot
                 }
             }
 
-            _logger.LogInformation($"{_searchFilters.Count} user(s) have been notified about {ad.Subject} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+            _logger.LogInformation($"{chatIds} user(s) have been notified about {ad.Subject} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+        }
+
+        public static string GetNotifyMessage(Ad ad)
+        {
+            string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +
+                $"\n\nНазвание объявления: {ad.Subject}" +
+                $"\nЦена: {ad.Price} {ad.Currency}" +
+                $"\nЦена: {ad.Price} {ad.Currency}" +
+                $"\nСсылка на объявление: {ad.Url}";
+
+            return message;
         }
     }
 }
