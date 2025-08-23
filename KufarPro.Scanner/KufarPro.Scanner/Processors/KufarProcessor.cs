@@ -1,5 +1,4 @@
-﻿using KufarPro.Scanner.Helpers;
-using KufarPro.Scanner.HttpClients.Interfaces;
+﻿using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Shared.Models.Ads;
 using KufarPro.Shared.Models.Search;
 
@@ -52,12 +51,12 @@ namespace KufarPro.Scanner.Processors
                 }
                 else
                 {
-                    result = searchResult.Ads;
+                    result = searchResult.Ads.ToList();
                 }
 
                 searchFilter.LatestAdsIds = adsIds;
                 _searchFiltersClient.UpdateLatestAdsIds(searchFilter.UrlQuery, searchFilter.LatestAdsIds);
-                
+
             }
 
             _logger.LogInformation($"{result.Count} new ad(s) detected.");

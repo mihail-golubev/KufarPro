@@ -1,6 +1,4 @@
-﻿using KufarPro.Scanner.Helpers;
-using KufarPro.Scanner.HttpClients.Interfaces;
-using KufarPro.Shared.Converters;
+﻿using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Shared.Models.Search;
 using System.Text.Json;
 
@@ -8,6 +6,8 @@ namespace KufarPro.Scanner.HttpClients
 {
     public class KufarClient : IKufarApiClient
     {
+        public const string BaseKufarQuery = "sort=lst.d&size=10&cur=USD&cmp=0&";
+
         private readonly HttpClient _client;
         private readonly ILogger<SearchFiltersApiClient> _logger;
 
@@ -21,16 +21,12 @@ namespace KufarPro.Scanner.HttpClients
         {
             try
             {
-                var adType = AppHelper.GetAdType(query);
-                var response = await _client.GetAsync($"?{AppHelper.BaseKufarQuery}{query}");
+                var response = await _client.GetAsync($"?{BaseKufarQuery}{query}");
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
 
-                var options = new JsonSerializerOptions();
-                options.Converters.Add(new SearchResultConverter(adType));
-                options.PropertyNameCaseInsensitive = true;
-
-                return JsonSerializer.Deserialize<SearchResult>(responseString, options);
+                var result = JsonSerializer.Deserialize<SearchResult>(responseString);
+                return result;
             }
             catch (Exception ex)
             {

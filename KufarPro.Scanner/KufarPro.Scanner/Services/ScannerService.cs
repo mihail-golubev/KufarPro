@@ -1,8 +1,9 @@
-using KufarPro.Scanner.Helpers;
 using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Scanner.Processors;
-using KufarPro.Scanner.Services.Interfaces;
-using KufarPro.Shared.Models.HelperModels;
+using KufarPro.Shared.Helpers;
+using KufarPro.Shared.Mappers;
+using KufarPro.Shared.Messaging.Interfaces;
+using KufarPro.Shared.Models.DTOs;
 using KufarPro.Shared.Models.Search;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Options;
@@ -11,13 +12,16 @@ namespace KufarPro.Scanner.Services
 {
     public class ScannerService : BackgroundService
     {
-        private readonly List<SearchFilter> _searchFilters;
+        private const int SyncCooldown = 5;
+
+        private DateTime _lastSyncTime;
+        private readonly List<SearchFilter> _searchFilters = new List<SearchFilter>();
 
         private readonly KufarProcessor _kufarProcessor;
         private readonly IGetSearchFiltersApiClient _searchFiltersApiClient;
         private readonly IMessageQueueService _messageQueueService;
-        private readonly ILogger<ScannerService> _logger;
         private readonly MessageQueueSettings _messageQueueSettings;
+        private readonly ILogger<ScannerService> _logger;
 
         public ScannerService(KufarProcessor kufarProcessor,
             IGetSearchFiltersApiClient searchFiltersApiClient,
@@ -26,9 +30,9 @@ namespace KufarPro.Scanner.Services
             ILogger<ScannerService> logger)
         {
             _kufarProcessor = kufarProcessor;
-            _searchFilters = searchFiltersApiClient.GetAll().Result.ToList();
             _messageQueueService = messageQueueService;
             _messageQueueSettings = messageQueueSettings.Value;
+            _searchFiltersApiClient = searchFiltersApiClient;
             _logger = logger;
         }
 
@@ -38,24 +42,30 @@ namespace KufarPro.Scanner.Services
             {
                 try
                 {
+                    if (_searchFilters.Count == 0 && (DateTime.UtcNow - _lastSyncTime) > TimeSpan.FromMinutes(SyncCooldown))
+                    {
+                        await SyncFilters(stoppingToken);
+                        _lastSyncTime = DateTime.UtcNow;
+                    }
+
                     _logger.LogInformation($"There are {_searchFilters.Count} search filters in database. Looking for new ads..");
 
                     foreach (var searchFilter in _searchFilters)
                     {
-                        BotType? botType = null;
                         var newAds = await _kufarProcessor.ScanForNewAds(searchFilter);
 
-                        foreach (var ad in newAds)
+                        if (newAds.Count > 0)
                         {
-                            botType ??= AppHelper.GetBotType(searchFilter.UrlQuery);
+                            var botType = AdTypeHelper.GetBotType(newAds.FirstOrDefault().Type);
 
-                            var newAd = new AdQueueModel()
+                            var newAdsDto = new NewAdsQueueModel()
                             {
-                                BotType = AppHelper.GetBotType(searchFilter.UrlQuery),
-                                Ad = ad
+                                BotType = AdTypeHelper.GetBotType(newAds.FirstOrDefault().Type),
+                                Ads = newAds.Select(x => AdMapper.MapToNewAd(x)).ToList(),
+                                ChatIds = searchFilter.ChatIds
                             };
 
-                            await _messageQueueService.PublishAsync(_messageQueueSettings.NewAdsQueueName, newAd);
+                            await _messageQueueService.PublishAsync(_messageQueueSettings.NewAdsQueueName, newAdsDto);
                         }
                     }
 
@@ -79,6 +89,24 @@ namespace KufarPro.Scanner.Services
             });
 
             await base.StartAsync(cancellationToken);
+        }
+
+        private async Task SyncFilters(CancellationToken stoppingToken)
+        {
+            try
+            {
+                var filters = await _searchFiltersApiClient.GetAll();
+                if (filters != null && filters.Any())
+                {
+                    _searchFilters.Clear();
+                    _searchFilters.AddRange(filters);
+                    _logger.LogInformation($"Filters sync... {_searchFilters.Count} filters received.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not retrieve filters from API.");
+            }
         }
     }
 }

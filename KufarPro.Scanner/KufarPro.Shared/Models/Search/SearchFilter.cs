@@ -9,9 +9,9 @@ namespace KufarPro.Shared.Models.Search
         public string UrlQuery { get; set; }
 
         [BsonElement("latestAdsIds")]
-        public HashSet<int> LatestAdsIds { get; set; } = new();
+        public HashSet<int> LatestAdsIds { get; set; } = new HashSet<int>();
 
         [BsonElement("chatIds")]
-        public List<long> ChatIds { get; set; } = new();
+        public List<long> ChatIds { get; set; } = new List<long>();
     }
 }

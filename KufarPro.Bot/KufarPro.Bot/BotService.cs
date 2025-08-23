@@ -1,83 +1,69 @@
-﻿using KufarPro.Bot.DataAccess;
-using KufarPro.Bot.Handlers;
-using KufarPro.Bot.Helpers;
-using KufarPro.Bot.Models.Database;
-using KufarPro.Bot.Models.Kufar.API;
-using KufarPro.Bot.Models.Kufar.HelperModels;
-using KufarPro.Bot.Models.Settings;
-using KufarPro.Bot.Processors;
+﻿using KufarPro.Shared.Messaging.Interfaces;
+using KufarPro.Shared.Models.DTOs;
+using KufarPro.Shared.Models.HelperModels;
+using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace KufarPro.Bot
 {
     public class BotService : BackgroundService
     {
-        private readonly List<SearchFilter> _searchFilters;
-        private readonly Dictionary<long, UserFilterState> _userFilterStates = new();
-
         private readonly ITelegramBotClient _botClient;
-        private readonly KufarProcessor _kufarProcessor;
-        private readonly IDbSubscriptionService _dbService;
         private readonly BotSettings _botSettings;
+        private readonly IMessageQueueService _messageQueueService;
+        private readonly MessageQueueSettings _messageQueueSettings;
         private readonly ILogger<BotService> _logger;
-        private readonly FilterMessageHandler _filterMessageHandler;
 
         public BotService(
             ITelegramBotClient botClient,
-            KufarProcessor kufarProcessor,
-            IDbSubscriptionService dbService,
             IOptions<BotSettings> botOptions,
+            IMessageQueueService messageQueueService,
+            IOptions<MessageQueueSettings> messageQueueOptions,
             ILogger<BotService> logger)
         {
             _botClient = botClient;
-            _kufarProcessor = kufarProcessor;
-            _dbService = dbService;
             _botSettings = botOptions.Value;
+            _messageQueueService = messageQueueService;
+            _messageQueueSettings = messageQueueOptions.Value;
             _logger = logger;
-            _searchFilters = _dbService.GetAllFiltersAsync().Result;
-            _filterMessageHandler = new FilterMessageHandler(_userFilterStates, _dbService, _searchFilters, _botClient, _logger);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
-            _logger.LogInformation($"{_botSettings.BotType} KufarPro Bot 2.1.1 has been started.");
+            await _messageQueueService.InitializeAsync();
 
-            while (!stoppingToken.IsCancellationRequested)
+            _botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, cancellationToken: stoppingToken);
+            _logger.LogInformation($"{_botSettings.BotType} KufarPro Bot 3.0.0 has been started.");
+
+            await _messageQueueService.ConsumeAsync<NewAdsQueueModel>(_messageQueueSettings.NewAdsQueueName, async message =>
             {
                 try
                 {
-                    _logger.LogInformation($"There are {_searchFilters.Count} search filters in database. Looking for new ads..");
-
-                    foreach (var searchFilter in _searchFilters)
+                    if (message.BotType != _botSettings.BotType)
                     {
-                        var newAds = await _kufarProcessor.ScanForNewAds(searchFilter);
-                        await Task.WhenAll(newAds.Select(ad => NotifyUsers(ad, searchFilter.ChatIds)));
+                        return;
                     }
 
-                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                    await NotifyUsers(message.Ads, message.ChatIds);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Some error occured: {ex.GetType()}::{ex.Message}\nContinue scanning..");
+                    _logger.LogError(ex, "Error while processing NewAdsQueueModel.");
                 }
-            }
+            });
         }
 
         private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
-            if (update.Type == UpdateType.Message && update.Message?.Text != null)
+            if (update.Message.Text.StartsWith("/status", StringComparison.CurrentCultureIgnoreCase))
             {
-                await _filterMessageHandler.HandleMessageAsync(update.Message, token);
-            }
-            else if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery != null)
-            {
-                await _filterMessageHandler.HandleCallbackQueryAsync(update.CallbackQuery, token);
+                var message = $"{_botSettings.BotType} Kufar Pro запущен и ожидает новых объявлений.";
+                await _botClient.SendMessage(update.Message.Chat.Id, message, cancellationToken: token);
             }
         }
 
@@ -87,31 +73,60 @@ namespace KufarPro.Bot
             return Task.CompletedTask;
         }
 
-        private async Task NotifyUsers(Ad ad, List<long> chatIds)
+        private async Task NotifyUsers(IEnumerable<NewAd> ads, List<long> chatIds)
         {
-            string message = ad switch
+            foreach (var ad in ads)
             {
-                AutoAd autoAd => AppHelper.GetNotifyMessage(autoAd),
-                BicycleAd bicycleAd => AppHelper.GetNotifyMessage(bicycleAd),
-                _ => AppHelper.GetNotifyMessage(ad)
-            };
+                InputMediaPhoto[] media = null;
+                string message = GetNotifyMessage(ad);
 
-            foreach (var userId in chatIds)
-            {
                 if (ad.Images.Count > 0)
                 {
-                    var media = ad.Images.Select((img, index) =>
-                        new InputMediaPhoto(img.Link) { Caption = index == 0 ? message : null }).ToArray();
-
-                    await _botClient.SendMediaGroup(userId, media);
+                    media = ad.Images.Select((image, index) => new InputMediaPhoto(image) { Caption = index == 0 ? message : null }).ToArray();
                 }
-                else
+
+                foreach (var chatId in chatIds)
                 {
-                    await _botClient.SendMessage(userId, message);
+                    try
+                    {
+                        if (media == null)
+                        {
+                            await _botClient.SendMessage(chatId, message);
+                        }
+                        else
+                        {
+                            await _botClient.SendMediaGroup(chatId, media);
+                        }
+
+                        _logger.LogInformation($"{chatIds.Count} user(s) have been notified about {ad.Subject} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+                    }
+                    catch (ApiRequestException ex)
+                    {
+                        _logger.LogError(ex, $"Something went wrong with sending message to Telegram.");
+                    }
                 }
             }
+        }
 
-            _logger.LogInformation($"{_searchFilters.Count} user(s) have been notified about {ad.Subject} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+        private static string GetNotifyMessage(NewAd ad)
+        {
+            string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +
+                $"\n\nНазвание объявления: {ad.Subject}" +
+                $"\nРазместил: {ad.Author.Name} [id:{ad.Author.Id}]" +
+                $"\nЕсть ли телефон: {GetBooleanAsString(!ad.IsPhoneHidden)}\n\n";
+
+            ad.Parameters.ForEach(param => message += $"{param}\n");
+
+            message += $"\nМестонахождение: {ad.City}, {ad.Region}" +
+                $"\nЦена: {ad.Price} {ad.Currency}" +
+                $"\nСсылка на объявление: {ad.Url}";
+
+            return message;
+        }
+         
+        private static string GetBooleanAsString(bool value)
+        {
+            return value ? "Да" : "Нет";
         }
     }
 }
