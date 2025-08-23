@@ -6,7 +6,7 @@ namespace KufarPro.Scanner.HttpClients
 {
     public class KufarClient : IKufarApiClient
     {
-        public const string BaseKufarQuery = "sort=lst.d&size=10&cur=USD&";
+        public const string BaseKufarQuery = "sort=lst.d&size=10&cur=USD&cmp=0&";
 
         private readonly HttpClient _client;
         private readonly ILogger<SearchFiltersApiClient> _logger;

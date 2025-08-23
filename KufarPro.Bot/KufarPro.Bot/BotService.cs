@@ -13,7 +13,6 @@ namespace KufarPro.Bot
 {
     public class BotService : BackgroundService
     {
-        private readonly BotType _botType;
         private readonly ITelegramBotClient _botClient;
         private readonly BotSettings _botSettings;
         private readonly IMessageQueueService _messageQueueService;
@@ -54,7 +53,7 @@ namespace KufarPro.Bot
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error while processing NewAdsQueueModel");
+                    _logger.LogError(ex, "Error while processing NewAdsQueueModel.");
                 }
             });
         }
@@ -113,8 +112,8 @@ namespace KufarPro.Bot
         {
             string message = $"Вышло новое объявление в {ad.ListTime:HH:mm dd/MM/yyyy}!" +
                 $"\n\nНазвание объявления: {ad.Subject}" +
-                $"\nРазместил: {ad.Author.Name}[id:{ad.Author.Id}]" +
-                $"\nСкрыт ли телефон: {GetBooleanAsString(ad.IsPhoneHidden)}\n\n";
+                $"\nРазместил: {ad.Author.Name} [id:{ad.Author.Id}]" +
+                $"\nЕсть ли телефон: {GetBooleanAsString(!ad.IsPhoneHidden)}\n\n";
 
             ad.Parameters.ForEach(param => message += $"{param}\n");
 
