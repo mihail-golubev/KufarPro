@@ -27,7 +27,7 @@ namespace KufarPro.Shared.Mappers
             {
                 var value = string.IsNullOrEmpty(x.ValueText) ? x.ValueRaw : x.ValueText;
                 return $"{x.Label}: {value}";
-            });
+            }).ToList();
 
             return newAd;
         }

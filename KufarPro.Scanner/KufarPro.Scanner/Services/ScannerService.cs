@@ -1,8 +1,8 @@
 using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Scanner.Processors;
-using KufarPro.Scanner.Services.Interfaces;
 using KufarPro.Shared.Helpers;
 using KufarPro.Shared.Mappers;
+using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.DTOs;
 using KufarPro.Shared.Models.Search;
 using KufarPro.Shared.Models.Settings;
@@ -20,8 +20,8 @@ namespace KufarPro.Scanner.Services
         private readonly KufarProcessor _kufarProcessor;
         private readonly IGetSearchFiltersApiClient _searchFiltersApiClient;
         private readonly IMessageQueueService _messageQueueService;
-        private readonly ILogger<ScannerService> _logger;
         private readonly MessageQueueSettings _messageQueueSettings;
+        private readonly ILogger<ScannerService> _logger;
 
         public ScannerService(KufarProcessor kufarProcessor,
             IGetSearchFiltersApiClient searchFiltersApiClient,
@@ -32,8 +32,8 @@ namespace KufarPro.Scanner.Services
             _kufarProcessor = kufarProcessor;
             _messageQueueService = messageQueueService;
             _messageQueueSettings = messageQueueSettings.Value;
-            _logger = logger;
             _searchFiltersApiClient = searchFiltersApiClient;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,6 +53,7 @@ namespace KufarPro.Scanner.Services
                     foreach (var searchFilter in _searchFilters)
                     {
                         var newAds = await _kufarProcessor.ScanForNewAds(searchFilter);
+
                         if (newAds.Count > 0)
                         {
                             var botType = AdTypeHelper.GetBotType(newAds.FirstOrDefault().Type);

@@ -17,8 +17,8 @@ namespace KufarPro.Shared.Models.Ads
         public string City { get; set; }
         public string Region { get; set; }
         public bool IsPhoneHidden { get; set; }
-        public IEnumerable<string> Images { get; set; } = new List<string>();
+        public List<string> Images { get; set; } = new List<string>();
         public AdType Type { get; set; }
-        public IEnumerable<AdParameter> Parameters { get; set; } = new List<AdParameter>();
+        public List<AdParameter> Parameters { get; set; } = new List<AdParameter>();
     }
 }

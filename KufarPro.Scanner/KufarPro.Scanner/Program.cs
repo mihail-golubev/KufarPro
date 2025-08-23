@@ -2,7 +2,8 @@ using KufarPro.Scanner.HttpClients;
 using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Scanner.Processors;
 using KufarPro.Scanner.Services;
-using KufarPro.Scanner.Services.Interfaces;
+using KufarPro.Shared.Messaging;
+using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Settings;
 using System.Net.Http.Headers;
 

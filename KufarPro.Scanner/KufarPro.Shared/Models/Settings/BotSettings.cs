@@ -1,8 +1,10 @@
-﻿namespace KufarPro.Shared.Models.Settings
+﻿using KufarPro.Shared.Models.HelperModels;
+
+namespace KufarPro.Shared.Models.Settings
 {
     public class BotSettings
     {
-        public string BotType { get; set; }
+        public BotType BotType { get; set; }
         public string BotTokenEnvVariableName { get; set; }
     }
 }

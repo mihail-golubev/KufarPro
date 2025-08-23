@@ -15,8 +15,8 @@ namespace KufarPro.Shared.Models.DTOs
         public string City { get; set; }
         public string Region { get; set; }
         public bool IsPhoneHidden { get; set; }
-        public IEnumerable<string> Images { get; set; } = new List<string>();
+        public List<string> Images { get; set; } = new List<string>();
         public AdType AdType { get; set; }
-        public IEnumerable<string> Parameters { get; set; } = new List<string>();
+        public List<string> Parameters { get; set; } = new List<string>();
     }
 }

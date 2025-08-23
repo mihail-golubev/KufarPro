@@ -1,4 +1,4 @@
-﻿namespace KufarPro.Scanner.Services.Interfaces
+﻿namespace KufarPro.Shared.Messaging.Interfaces
 {
     public interface IMessageQueueService
     {

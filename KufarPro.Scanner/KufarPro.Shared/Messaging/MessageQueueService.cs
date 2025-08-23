@@ -1,43 +1,46 @@
-﻿using KufarPro.Scanner.Services.Interfaces;
+﻿using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Settings;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
 
-namespace KufarPro.Scanner.Services
+namespace KufarPro.Shared.Messaging
 {
     public class MessageQueueService : IMessageQueueService, IAsyncDisposable
     {
-        private readonly MessageQueueSettings _settings;
-        private readonly ILogger<MessageQueueService> _logger;
-        private IConnection _connection;
-        private IChannel _channel;
+        protected readonly MessageQueueSettings _settings;
+        protected readonly ILogger<MessageQueueService> _logger;
+
+        protected IConnection _connection;
+        protected IChannel _channel;
+        protected IConnectionFactory _factory;
 
         public MessageQueueService(IOptions<MessageQueueSettings> options, ILogger<MessageQueueService> logger)
         {
             _settings = options.Value;
             _logger = logger;
-        }
 
-        public async Task InitializeAsync()
-        {
             var password = Environment.GetEnvironmentVariable(_settings.PasswordEnvVariableName);
             if (string.IsNullOrEmpty(password))
             {
                 throw new InvalidOperationException($"Environment variable '{_settings.PasswordEnvVariableName}' is not set.");
             }
 
-            var factory = new ConnectionFactory
+            _factory = new ConnectionFactory
             {
                 HostName = _settings.HostName,
                 Port = _settings.Port,
                 UserName = _settings.Username,
                 Password = password
             };
+        }
 
-            _connection = await factory.CreateConnectionAsync();
+        public virtual async Task InitializeAsync()
+        {
+            _connection = await _factory.CreateConnectionAsync();
             _channel = await _connection.CreateChannelAsync();
 
             await _channel.QueueDeclareAsync(_settings.NewFiltersQueueName, durable: true, exclusive: false, autoDelete: false);
@@ -50,7 +53,7 @@ namespace KufarPro.Scanner.Services
         {
             var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
             await _channel.BasicPublishAsync(exchange: string.Empty, routingKey: queueName, mandatory: false, body: body);
-            _logger.LogInformation("Message published to {Queue}", queueName);
+            _logger.LogInformation($"Message published to {queueName}");
         }
 
         public async Task ConsumeAsync<T>(string queueName, Func<T, Task> handler)
@@ -69,7 +72,7 @@ namespace KufarPro.Scanner.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error processing message from {Queue}", queueName);
+                    _logger.LogError(ex, $"Error processing message from {queueName}");
                 }
             };
 

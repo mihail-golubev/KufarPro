@@ -1,4 +1,6 @@
-﻿using KufarPro.Shared.Logging;
+﻿using KufarPro.Bot.Messaging;
+using KufarPro.Shared.Logging;
+using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,7 @@ namespace KufarPro.Bot
                 {
                     services.Configure<BotSettings>(context.Configuration.GetSection("BotSettings"));
                     services.Configure<LogSettings>(context.Configuration.GetSection("LogSettings"));
+                    services.Configure<MessageQueueSettings>(context.Configuration.GetSection("MessageQueue"));
 
                     services.AddLogging(configure => configure.AddSimpleConsole());
                     services.AddSingleton<HttpClient>();
@@ -40,6 +43,7 @@ namespace KufarPro.Bot
                     });
 
                     services.AddHostedService<BotService>();
+                    services.AddSingleton<IMessageQueueService, BotMessageQueueService>();
 
                     services.AddLogging(logging =>
                     {
