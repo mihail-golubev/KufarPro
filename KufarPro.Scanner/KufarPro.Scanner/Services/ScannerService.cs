@@ -61,7 +61,7 @@ namespace KufarPro.Scanner.Services
                             var newAdsDto = new NewAdsQueueModel()
                             {
                                 BotType = AdTypeHelper.GetBotType(newAds.FirstOrDefault().Type),
-                                Ads = newAds.Select(x => AdMapper.MapToNewAd(x)),
+                                Ads = newAds.Select(x => AdMapper.MapToNewAd(x)).ToList(),
                                 ChatIds = searchFilter.ChatIds
                             };
 

@@ -61,7 +61,7 @@ namespace KufarPro.Scanner.Processors
 
             _logger.LogInformation($"{result.Count} new ad(s) detected.");
 
-            result.ForEach(x => x.Images = x.Images?.Take(10));
+            result.ForEach(x => x.Images = x.Images?.Take(10).ToList());
 
             return result;
         }
