@@ -2,6 +2,7 @@ using KufarPro.Scanner.HttpClients;
 using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Scanner.Processors;
 using KufarPro.Scanner.Services;
+using KufarPro.Shared;
 using KufarPro.Shared.Messaging;
 using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Settings;
@@ -16,17 +17,17 @@ namespace KufarPro.Scanner
             var builder = Host.CreateApplicationBuilder(args);
 
             var httpClientsSettings = new HttpClientsSettings();
-            builder.Configuration.GetSection("HttpClientsSettings").Bind(httpClientsSettings);
-            builder.Services.Configure<MessageQueueSettings>(builder.Configuration.GetSection("MessageQueue"));
+            builder.Configuration.GetSection(Constants.HttpClientsSettingsSectionName).Bind(httpClientsSettings);
+            builder.Services.Configure<MessageQueueSettings>(builder.Configuration.GetSection(Constants.MessageQueueSettingsSectionName));
 
-            builder.Services.AddHttpClient("SearchFiltersApiClient", client =>
+            builder.Services.AddHttpClient(Constants.SearchFiltersApiClientName, client =>
             {
                 client.BaseAddress = new Uri(httpClientsSettings.SearchFiltersApiBaseUrl);
                 client.DefaultRequestHeaders.Add("X-API-Key", Environment.GetEnvironmentVariable(httpClientsSettings.SearchFiltersApiKeyEnvVariableName));
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             });
 
-            builder.Services.AddHttpClient("KufarApiClient", client =>
+            builder.Services.AddHttpClient(Constants.KufarApiClientName, client =>
             {
                 client.BaseAddress = new Uri(httpClientsSettings.KufarApiBaseUrl);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

@@ -1,5 +1,6 @@
 using KufarPro.Api.Services;
 using KufarPro.Api.Services.Interfaces;
+using KufarPro.Shared;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -12,8 +13,7 @@ namespace KufarPro.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.Configure<DatabaseSettings>(
-                builder.Configuration.GetSection("MongoDbSettings"));
+            builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection(Constants.MongoDbSettingsSectionName));
 
             builder.Services.AddSingleton<IMongoDatabase>(sp =>
             {
