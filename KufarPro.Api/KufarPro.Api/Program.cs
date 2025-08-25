@@ -1,6 +1,7 @@
 using KufarPro.Api.Services;
 using KufarPro.Api.Services.Interfaces;
 using KufarPro.Shared;
+using KufarPro.Shared.Logging;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -28,6 +29,18 @@ namespace KufarPro.Api
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddSimpleConsole(options =>
+                {
+                    options.TimestampFormat = "[dd/MM/yyyy HH:mm:ss] ";
+                });
+
+                var logSettings = builder.Configuration.GetSection(Constants.LogSettingsSectionName).Get<LogSettings>();
+                logging.AddProvider(new FileLoggerProvider(Path.Combine(AppContext.BaseDirectory, logSettings.LogFileName), logSettings.MaxLogFileSize));
+            });
 
             var app = builder.Build();
 

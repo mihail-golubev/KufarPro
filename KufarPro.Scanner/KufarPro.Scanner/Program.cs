@@ -3,6 +3,7 @@ using KufarPro.Scanner.HttpClients.Interfaces;
 using KufarPro.Scanner.Processors;
 using KufarPro.Scanner.Services;
 using KufarPro.Shared;
+using KufarPro.Shared.Logging;
 using KufarPro.Shared.Messaging;
 using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Settings;
@@ -39,6 +40,18 @@ namespace KufarPro.Scanner
             builder.Services.AddSingleton<IMessageQueueService, MessageQueueService>();
             builder.Services.AddSingleton<KufarProcessor>();
             builder.Services.AddHostedService<ScannerService>();
+
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddSimpleConsole(options =>
+                {
+                    options.TimestampFormat = "[dd/MM/yyyy HH:mm:ss] ";
+                });
+
+                var logSettings = builder.Configuration.GetSection(Constants.LogSettingsSectionName).Get<LogSettings>();
+                logging.AddProvider(new FileLoggerProvider(Path.Combine(AppContext.BaseDirectory, logSettings.LogFileName), logSettings.MaxLogFileSize));
+            });
 
             var host = builder.Build();
             host.Run();
