@@ -35,7 +35,7 @@ namespace KufarPro.Shared.Helpers
         {
             // Auto
             { 2010, AdType.Car },
-            { 2020, AdType.Motorcycle },
+            { 2030, AdType.Motorcycle },
             // Real Estate
             { 1010, AdType.Flat },
             { 1020, AdType.House },

@@ -1,6 +1,6 @@
 ﻿using KufarPro.Shared.Models.HelperModels;
 
-namespace KufarPro.Shared.Models.DTOs
+namespace KufarPro.Shared.Messaging.Models
 {
     public class NewAdsQueueModel
     {

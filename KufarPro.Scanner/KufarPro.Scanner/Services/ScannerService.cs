@@ -3,7 +3,7 @@ using KufarPro.Scanner.Processors;
 using KufarPro.Shared.Helpers;
 using KufarPro.Shared.Mappers;
 using KufarPro.Shared.Messaging.Interfaces;
-using KufarPro.Shared.Models.DTOs;
+using KufarPro.Shared.Messaging.Models;
 using KufarPro.Shared.Models.Search;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Options;
@@ -12,7 +12,7 @@ namespace KufarPro.Scanner.Services
 {
     public class ScannerService : BackgroundService
     {
-        private const int SyncCooldown = 5;
+        private const int SyncCooldown = 60; // minutes
 
         private DateTime _lastSyncTime;
         private readonly List<SearchFilter> _searchFilters = new List<SearchFilter>();
@@ -42,7 +42,7 @@ namespace KufarPro.Scanner.Services
             {
                 try
                 {
-                    if (_searchFilters.Count == 0 && (DateTime.UtcNow - _lastSyncTime) > TimeSpan.FromMinutes(SyncCooldown))
+                    if ((DateTime.UtcNow - _lastSyncTime) > TimeSpan.FromMinutes(SyncCooldown))
                     {
                         await SyncFilters(stoppingToken);
                         _lastSyncTime = DateTime.UtcNow;
@@ -61,7 +61,7 @@ namespace KufarPro.Scanner.Services
                             var newAdsDto = new NewAdsQueueModel()
                             {
                                 BotType = AdTypeHelper.GetBotType(newAds.FirstOrDefault().Type),
-                                Ads = newAds.Select(x => AdMapper.MapToNewAd(x)).ToList(),
+                                Ads = newAds.Select(ad => ad.MapToNewAd()).ToList(),
                                 ChatIds = searchFilter.ChatIds
                             };
 
@@ -81,9 +81,9 @@ namespace KufarPro.Scanner.Services
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
             await _messageQueueService.InitializeAsync();
-            await _messageQueueService.ConsumeAsync<SearchFilter>(_messageQueueSettings.NewFiltersQueueName, async filter =>
+            await _messageQueueService.ConsumeAsync<NewFilter>(_messageQueueSettings.NewFiltersQueueName, async filter =>
             {
-                _searchFilters.Add(filter);
+                _searchFilters.AddOrUpdate(filter);
                 _logger.LogInformation($"New filter added from queue: {filter.UrlQuery}");
                 await Task.CompletedTask;
             });

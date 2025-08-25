@@ -1,7 +1,9 @@
+using KufarPro.Api.Messaging;
 using KufarPro.Api.Services;
 using KufarPro.Api.Services.Interfaces;
 using KufarPro.Shared;
 using KufarPro.Shared.Logging;
+using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -15,6 +17,7 @@ namespace KufarPro.Api
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection(Constants.MongoDbSettingsSectionName));
+            builder.Services.Configure<MessageQueueSettings>(builder.Configuration.GetSection(Constants.MessageQueueSettingsSectionName));
 
             builder.Services.AddSingleton<IMongoDatabase>(sp =>
             {
@@ -25,6 +28,8 @@ namespace KufarPro.Api
 
             builder.Services.AddSingleton<IDbUpdaterService, SearchFilterService>();
             builder.Services.AddSingleton<IDbSubscriptionService, SearchFilterService>();
+            builder.Services.AddSingleton<IMessageQueueService, FiltersApiMessageQueueService>();
+            builder.Services.AddHostedService<MessageQueueInitializer>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

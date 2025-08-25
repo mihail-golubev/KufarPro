@@ -1,11 +1,11 @@
-﻿using KufarPro.Shared.Models.Ads;
-using KufarPro.Shared.Models.DTOs;
+﻿using KufarPro.Shared.Messaging.Models;
+using KufarPro.Shared.Models.Ads;
 
 namespace KufarPro.Shared.Mappers
 {
     public static class AdMapper
     {
-        public static NewAd MapToNewAd(Ad ad)
+        public static NewAd MapToNewAd(this Ad ad)
         {
             var newAd = new NewAd
             {

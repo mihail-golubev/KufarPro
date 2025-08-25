@@ -1,7 +1,7 @@
 ﻿using KufarPro.Shared.Models.Ads;
 using KufarPro.Shared.Models.HelperModels;
 
-namespace KufarPro.Shared.Models.DTOs
+namespace KufarPro.Shared.Messaging.Models
 {
     public class NewAd
     {

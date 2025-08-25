@@ -1,17 +1,27 @@
 ﻿using KufarPro.Api.Services.Interfaces;
+using KufarPro.Shared.Mappers;
+using KufarPro.Shared.Messaging.Interfaces;
 using KufarPro.Shared.Models.Search;
+using KufarPro.Shared.Models.Settings;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace KufarPro.Api.Services;
 
 public class SearchFilterService : IDbSubscriptionService, IDbUpdaterService
 {
-    private const string COLLECTION_NAME = "search-filters";
-    private readonly IMongoCollection<SearchFilter> _searchFiltersCollection;
+    private const string CollectionName = "search-filters";
 
-    public SearchFilterService(IMongoDatabase database)
+    private readonly string _queueName;
+    private readonly IMongoCollection<SearchFilter> _searchFiltersCollection;
+    private readonly IMessageQueueService _messageQueueService;
+    private readonly MessageQueueSettings _messageQueueSettings;
+
+    public SearchFilterService(IMongoDatabase database, IMessageQueueService messageQueueService, IOptions<MessageQueueSettings> messageQueueOptions)
     {
-        _searchFiltersCollection = database.GetCollection<SearchFilter>(COLLECTION_NAME);
+        _searchFiltersCollection = database.GetCollection<SearchFilter>(CollectionName);
+        _messageQueueService = messageQueueService;
+        _queueName = messageQueueOptions.Value.NewFiltersQueueName;
     }
 
     public async Task<IEnumerable<SearchFilter>> GetAll()
@@ -42,6 +52,7 @@ public class SearchFilterService : IDbSubscriptionService, IDbUpdaterService
                 existingFilter.ChatIds.Add(chatId);
                 await _searchFiltersCollection.ReplaceOneAsync(filter => filter.UrlQuery == existingFilter.UrlQuery, existingFilter);
 
+                await _messageQueueService.PublishAsync(_queueName, existingFilter.MapToNewFilter());
                 return existingFilter;
             }
 
@@ -57,6 +68,7 @@ public class SearchFilterService : IDbSubscriptionService, IDbUpdaterService
 
             await _searchFiltersCollection.InsertOneAsync(newFilter);
 
+            await _messageQueueService.PublishAsync(_queueName, newFilter.MapToNewFilter());
             return newFilter;
         }
     }
@@ -80,6 +92,7 @@ public class SearchFilterService : IDbSubscriptionService, IDbUpdaterService
                     await _searchFiltersCollection.ReplaceOneAsync(filter => filter.UrlQuery == existingFilter.UrlQuery, existingFilter);
                 }
 
+                await _messageQueueService.PublishAsync(_queueName, existingFilter.MapToNewFilter());
                 return true;
             }
         }

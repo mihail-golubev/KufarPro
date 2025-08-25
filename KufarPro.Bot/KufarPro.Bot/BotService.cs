@@ -1,6 +1,5 @@
 ﻿using KufarPro.Shared.Messaging.Interfaces;
-using KufarPro.Shared.Models.DTOs;
-using KufarPro.Shared.Models.HelperModels;
+using KufarPro.Shared.Messaging.Models;
 using KufarPro.Shared.Models.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -53,7 +52,7 @@ namespace KufarPro.Bot
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error while processing NewAdsQueueModel.");
+                    _logger.LogError(ex, "Error while processing new ads.");
                 }
             });
         }
@@ -62,7 +61,7 @@ namespace KufarPro.Bot
         {
             if (update.Message.Text.StartsWith("/status", StringComparison.CurrentCultureIgnoreCase))
             {
-                var message = $"{_botSettings.BotType} Kufar Pro запущен и ожидает новых объявлений.";
+                var message = $"{_botSettings.BotType} Kufar Pro запущен и ожидает новых объявлений.\nВаш chatId: {update.Message.Chat.Id}";
                 await _botClient.SendMessage(update.Message.Chat.Id, message, cancellationToken: token);
             }
         }
@@ -98,13 +97,15 @@ namespace KufarPro.Bot
                             await _botClient.SendMediaGroup(chatId, media);
                         }
 
-                        _logger.LogInformation($"{chatIds.Count} user(s) have been notified about {ad.Subject} listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
+                        await Task.Delay(1000);
                     }
                     catch (ApiRequestException ex)
                     {
                         _logger.LogError(ex, $"Something went wrong with sending message to Telegram.");
                     }
                 }
+
+                _logger.LogInformation($"{chatIds.Count} user(s) have been notified about {ad.Subject}[id:{ad.Id}][url:{ad.Url}] listed in {ad.ListTime:HH:mm dd.MM.yyyy}.");
             }
         }
 
