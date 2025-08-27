@@ -18,6 +18,19 @@ namespace KufarPro.Shared.Helpers
             "cars_drive"
         };
 
+        private static readonly HashSet<string> _motorcycleAllowedKeys = new HashSet<string>()
+        {
+            "brand",
+            "cars_level_1",
+            "regdate",
+            "mileage",
+            "cars_engine",
+            "cars_capacity",
+            "cars_gearbox",
+            "cars_type",
+            "cars_drive"
+        };
+
         private static readonly HashSet<string> _bicycleAllowedKeys = new HashSet<string>()
         {
             "bicycles_brand",

@@ -4,17 +4,23 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Bson" Version="3.4.2" />
+    <PackageReference Include="MongoDB.Bson" Version="3.4.3" />
     <PackageReference Include="MongoDB.Driver" Version="3.4.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\KufarPro.Scanner\KufarPro.Shared\KufarPro.Shared.csproj" />
+    <Reference Include="KufarPro.Shared">
+      <HintPath>..\..\KufarPro.Shared\KufarPro.Shared\bin\Debug\net8.0\KufarPro.Shared.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

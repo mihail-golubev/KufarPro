@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Telegram.Bot" Version="22.4.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +20,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\KufarPro.Scanner\KufarPro.Shared\KufarPro.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="KufarPro.Shared">
+      <HintPath>..\..\KufarPro.Shared\KufarPro.Shared\bin\Debug\net8.0\KufarPro.Shared.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

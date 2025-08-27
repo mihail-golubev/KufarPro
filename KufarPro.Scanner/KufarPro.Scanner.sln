@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KufarPro.Scanner", "KufarPro.Scanner\KufarPro.Scanner.csproj", "{889D711F-B22F-41A3-B55D-EE1A3CF487EC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KufarPro.Shared", "KufarPro.Shared\KufarPro.Shared.csproj", "{B72F45D9-4A34-4822-A6BB-C4229084A9AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KufarPro.Scanner", "KufarPro.Scanner\KufarPro.Scanner.csproj", "{889D711F-B22F-41A3-B55D-EE1A3CF487EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{889D711F-B22F-41A3-B55D-EE1A3CF487EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{889D711F-B22F-41A3-B55D-EE1A3CF487EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{889D711F-B22F-41A3-B55D-EE1A3CF487EC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B72F45D9-4A34-4822-A6BB-C4229084A9AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B72F45D9-4A34-4822-A6BB-C4229084A9AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B72F45D9-4A34-4822-A6BB-C4229084A9AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B72F45D9-4A34-4822-A6BB-C4229084A9AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

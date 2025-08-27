@@ -11,9 +11,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
+    <PackageReference Include="MongoDB.Bson" Version="3.4.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KufarPro.Shared\KufarPro.Shared.csproj" />
+    <Reference Include="KufarPro.Shared">
+      <HintPath>..\..\KufarPro.Shared\KufarPro.Shared\bin\Debug\net8.0\KufarPro.Shared.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
