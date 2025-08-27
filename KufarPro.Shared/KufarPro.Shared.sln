@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KufarPro.Shared", "KufarPro.Shared\KufarPro.Shared.csproj", "{40C9282A-3E84-44C6-87E2-B12ACE40A57E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KufarPro.Shared", "KufarPro.Shared.csproj", "{A9A877C6-1380-453A-8D1C-DAE30145479F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{40C9282A-3E84-44C6-87E2-B12ACE40A57E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{40C9282A-3E84-44C6-87E2-B12ACE40A57E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{40C9282A-3E84-44C6-87E2-B12ACE40A57E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{40C9282A-3E84-44C6-87E2-B12ACE40A57E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9A877C6-1380-453A-8D1C-DAE30145479F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9A877C6-1380-453A-8D1C-DAE30145479F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9A877C6-1380-453A-8D1C-DAE30145479F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9A877C6-1380-453A-8D1C-DAE30145479F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
